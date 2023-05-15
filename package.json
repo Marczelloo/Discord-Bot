@@ -12,6 +12,7 @@
   "dependencies": {
     "@types/node": "^20.1.2",
     "discord.js": "^14.11.0",
+    "nodemon": "^2.0.22",
     "typescript": "^5.0.4"
   },
   "devDependencies": {
