@@ -27,9 +27,9 @@ module.exports = {
         .setDescription(desc)
         .setThumbnail(icon)
         .addFields(
-            { name: "Owner ", value: ownerTag, inline: true},
-            { name: "Boost Lvl", value: boost.toString(), inline: true},
-            { name: "NSFW Lvl", value: nsfwLevel.toString(), inline: true},
+            { name: "Owner 👑", value: ownerTag, inline: true},
+            { name: "Boost Lvl 🚀", value: boost.toString(), inline: true},
+            { name: "NSFW Lvl 🔞", value: nsfwLevel.toString(), inline: true},
         )
         .addFields(
             { name: "Members 👤", value: memberCount.toString() , inline: true },

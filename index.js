@@ -9,7 +9,26 @@ const { token } = require('./config.json');
 const client = new Client({ intents: [GatewayIntentBits.Guilds, 
 	GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, 
 	GatewayIntentBits.GuildPresences, 
-	GatewayIntentBits.MessageContent] });
+	GatewayIntentBits.MessageContent,
+	GatewayIntentBits.Guilds, 
+	GatewayIntentBits.GuildMembers,
+	GatewayIntentBits.GuildModeration, 
+	GatewayIntentBits.GuildEmojisAndStickers, 
+	GatewayIntentBits.GuildIntegrations,
+	GatewayIntentBits.GuildWebhooks,
+	GatewayIntentBits.GuildInvites, 
+	GatewayIntentBits.GuildVoiceStates,
+	GatewayIntentBits.GuildPresences,
+	GatewayIntentBits.GuildMessages, 
+	GatewayIntentBits.GuildMessageReactions, 
+	GatewayIntentBits.GuildMessageTyping, 
+	GatewayIntentBits.DirectMessages, 
+	GatewayIntentBits.DirectMessageReactions, 
+	GatewayIntentBits.DirectMessageTyping, 
+	GatewayIntentBits.MessageContent,
+	GatewayIntentBits.GuildScheduledEvents, 
+	GatewayIntentBits.AutoModerationConfiguration, 
+	GatewayIntentBits.AutoModerationExecution ]});
 
 client.commands = new Collection();
 const foldersPath = path.join(__dirname, 'commands');
