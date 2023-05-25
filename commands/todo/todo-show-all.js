@@ -1,8 +1,5 @@
-const { SlashCommandBuilder, ButtonStyle, MessageButton, EmbedBuilder, Message, ButtonInteraction } = require('discord.js');
-const { ActionRowBuilder, ButtonBuilder } = require('discord.js')
+const { SlashCommandBuilder,  italic, EmbedBuilder } = require('discord.js');
 const con = require('../../db');
-
-const tasksPerPage = 10;
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,104 +12,59 @@ module.exports = {
         const user = interaction.user.id;
 
         let errors = [];
+        let tasks;
 
-        const query = `select title, description, deadline from todo where user_id = ${user}`;
-        con.query(query, function (err, results){
+        try {
+          const query = `SELECT title, description, deadline FROM todo WHERE user_id = ${user}`;
+           
+          con.query(query, function(err, result){
             if(err){
-                console.error(err);
+                console.log(err);
                 errors.push(err);
-            }
 
-            const tasks = results;
+                const fail = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle('Failed to show tasks')
+                .setDescription('Error: ' + errors.join(' | '))
+                .setTimestamp();
 
-            const pages = splitIntoPages(tasks, tasksPerPage);
+                interaction.reply({ embeds: [fail] });
 
-          
-            const currentTasks = pages[currentPage - 1] || [];
-            
-            const taskDescription = currentTasks.map(taks => ` - ${task.title}`);
+            } 
+            else 
+            {
+                const success = new EmbedBuilder()
+                .setColor(0x00ff00)
+                .setTitle(`To-Do List - ${interaction.user.tag}`)
+                .setTimestamp();
 
-        });
-
-        const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle(`To-Do List (Page ${currentPage})`)
-        .setDescription(taskDescription.length > 0 ? taskDescription.join('\n') : "No tasks found.");
-
-
-        const row = new ActionRowBuilder()
-        .addComponents(
-            new ButtonBuilder()
-            .setCustomId('prev_page')
-            .setLabel("Previous")
-            .setStyle(ButtonStyle.Primary)
-            .setDisabled(currentPage === 1)
-        )
-            new ButtonBuilder()
-            .setCustomId('next_page')
-            .setLabel("Next")
-            .setStyle(ButtonStyle.Primary)
-            .setDisabled(currentPage === pages.length)
+                if(result.length <= 0 ){
+                    success.setDescription('No tasks found.');
+                } else {
+                    const fields = [];
+                    result.forEach((task, id) =>{
+                        fields.push({name: '#' + (id + 1) + " | " + task.title, value: task.description + '\n' + italic('Deadline: ' + task.deadline.toDateString())});
+                    })
+                    const success = new EmbedBuilder()
+                    .setColor(0x00ff00)
+                    .setTitle(`To-Do List - ${interaction.user.tag}`)
+                    .addFields(fields)
+                    .setTimestamp();
         
-        interaction.reply({ embeds: [embed], components: [row]})
-            .then(reply =>{
-                const collector = reply.createMessageComponentCollector({ componentType: 'BUTTON' });
+                    interaction.reply({ embeds: [success] });
+                }
+            } 
+          });
+        } catch(err){
+            console.log(err);
 
-                collector.on('collect', buttonInteraction => {
-                    if(buttonInteraction.customId === 'prev_page'){
-                        const previousPage = currentPage - 1;
-                        updatePage(buttonInteraction, previousPage);
-                    }
-                    else if(buttonInteraction.customId === 'next_page')
-                    {
-                        const nextPage = currentPage + 1;
-                        updatePage(buttonInteraction, nextPage);
-                    }
-                });
+            const error = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle(`Failed to show tasks`)
+                .setDescription('Err: ' + err)
+                .setTimestamp();
 
-                collector.on('end', () => {
-                    row.components.forEach(component => {
-                        component.setDisabled(true);
-                    });
-                    reply.edit({ component: [row]});
-                });
-            });
-    }
-};
-
-function splitIntoPages(tasks, pageSize){
-    const pages = [];
-    for(let i = 0; i < tasks.length; i += pageSize){
-        const page = tasks.slice(i , i + pageSize);
-        pages.push(page);
-    }
-
-    return pages;
-}
-
-function updatePage(buttonInteraction, page){
-    const { message } = buttonInteraction;
-
-    const query = `select title, description, deadline from todo where user_id = ${user}`;
-    con.query(query, function(err, results) {
-        if(err) {
-            console.error(err);
-            return;
+                await interaction.reply({ embeds: [error] });
         }
-
-        const tasks = results;
-
-        const pages = splitIntoPages(tasks, tasksPerPage);
-
-        const currentTasks = pages[page - 1] || [];
-
-        const taskDescription = currentTasks.map(task => ` - ${task.title}`);
-
-        const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle(`To-Do List (Page ${page})`)
-        .setDescription(taskDescription.lenght > 0 ? taskDescription.join('\n') : 'No tasks found.');
-
-        message.edit({ embeds: [embed]});
-    })
-}
+    }
+    };

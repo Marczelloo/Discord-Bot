@@ -40,28 +40,27 @@ module.exports = {
                 if (err) {
                     console.error(err);
                     error.push(err);
+
+                    const failed = new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle("Task adding failed!")
+                    .setDescription("Err: " + error.join(' | '))
+                    .setTimestamp();
+
+                    interaction.reply({ embeds: [failed] });
                 } else {
+
                     result = "Task " + title + " added successfully";
+
+                    const success = new EmbedBuilder()
+                    .setColor(0x00ff00)
+                    .setTitle("Task added successfully!")
+                    .setDescription(result.toString())
+                    .setTimestamp();
+
+                    interaction.reply({ embeds: [success] });
                 }
             });
-        }
-
-        const success = new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setTitle("Task added successfully!")
-            .setDescription("Task: " + title)
-            .setTimestamp();
-
-        const failed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("Task adding failed!")
-            .setDescription("Err: " + error.join(' | '))
-            .setTimestamp();
-
-        if (error.length === 0) {
-            await interaction.reply({ embeds: [success] });
-        } else {
-            await interaction.reply({ embeds: [failed] });
         }
     }
 };
