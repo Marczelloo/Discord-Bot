@@ -74,13 +74,14 @@ module.exports = {
 
         const previousButton = new ButtonBuilder()
         .setCustomId('previous')
-        .setLabel('Previous')
         .setStyle(ButtonStyle.Primary)
+        .setEmoji('1198248587369386134')
+
 
         const nextButton = new ButtonBuilder()
         .setCustomId('next')
-        .setLabel('Next')
         .setStyle(ButtonStyle.Primary)
+        .setEmoji('1198248590087307385');
 
         const firstPageButton = new ButtonBuilder()
         .setCustomId('firstPage')
@@ -144,39 +145,39 @@ module.exports = {
         
                 row.components[0].setDisabled(true);
 
-                await interaction.reply({ embeds: [helpEmbed], components: [row] });
+                await interaction.reply({ embeds: [helpEmbed], components: [row], ephemeral: true });
                 break;
             case 'utility':
                 index = 1;
                 
-                await interaction.reply({ embeds: [utilityEmbed], components: [row] });
+                await interaction.reply({ embeds: [utilityEmbed], components: [row], ephemeral: true });
                 break;
             case 'fun':
                 index = 2;
 
-                await interaction.reply({ embeds: [funEmbed], components: [row] });
+                await interaction.reply({ embeds: [funEmbed], components: [row], ephemeral: true });
                 break;
             case 'moderation':
                 index = 3;
                 
-                await interaction.reply({ embeds: [moderationEmbed], components: [row] });
+                await interaction.reply({ embeds: [moderationEmbed], components: [row], ephemeral: true });
                 break;
             case 'music':
                 index = 4;
                 
-                interaction.reply({ embeds: [musicEmbed], components: [row] });
+                interaction.reply({ embeds: [musicEmbed], components: [row], ephemeral: true });
                 break;
             case 'todo':
                 index = 5;
                 
-                interaction.reply({ embeds: [todoEmbed], components: [row] });
+                interaction.reply({ embeds: [todoEmbed], components: [row], ephemeral: true });
                 break;
             case 'all':
                 index = 6;
                 
                 row.components[2].setDisabled(true);
 
-                interaction.reply({ embeds: [allEmbed], components: [row] });
+                interaction.reply({ embeds: [allEmbed], components: [row], ephemeral: true });
                 break;
         }
 
@@ -204,43 +205,43 @@ module.exports = {
                         row.components[0].setDisabled(true);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [helpEmbed], components: [row] });
+                        await confirmation.update({ embeds: [helpEmbed], components: [row], ephemeral: true });
                         break;
                     case 1:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [utilityEmbed], components: [row] });
+                        await confirmation.update({ embeds: [utilityEmbed], components: [row], ephemeral: true });
                         break;
                     case 2:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [funEmbed], components: [row] });
+                        await confirmation.update({ embeds: [funEmbed], components: [row], ephemeral: true });
                         break;
                     case 3:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [moderationEmbed], components: [row] });
+                        await confirmation.update({ embeds: [moderationEmbed], components: [row], ephemeral: true });
                         break;
                     case 4:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [musicEmbed], components: [row] });
+                        await confirmation.update({ embeds: [musicEmbed], components: [row], ephemeral: true });
                         break;
                     case 5:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [todoEmbed], components: [row] });
+                        await confirmation.update({ embeds: [todoEmbed], components: [row], ephemeral: true });
                         break;
                     case 6:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(true);
 
-                        await confirmation.update({ embeds: [allEmbed], components: [row] });
+                        await confirmation.update({ embeds: [allEmbed], components: [row], ephemeral: true });
                         break;
                 }
             });
