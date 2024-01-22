@@ -10,11 +10,23 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@discordjs/opus": "^0.9.0",
+    "@discordjs/voice": "^0.16.1",
     "@types/node": "^20.1.2",
     "discord.js": "^14.11.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "fs": "^0.0.1-security",
     "mysql": "^2.18.1",
+    "node-cron": "^3.0.3",
+    "node-opus": "^0.3.3",
     "nodemon": "^2.0.22",
-    "typescript": "^5.0.4"
+    "opusscript": "^0.0.8",
+    "tweetnacl": "^1.0.3",
+    "typescript": "^5.0.4",
+    "youtube-dl-exec": "^2.5.4",
+    "ytdl-core": "^4.11.5",
+    "ytpl": "^2.3.0",
+    "ytsr": "^3.8.4"
   },
   "devDependencies": {
     "eslint": "^8.40.0"

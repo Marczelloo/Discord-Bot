@@ -7,16 +7,14 @@ const con = mysql.createConnection({
     database: "nigusfigus"
 });
 
-// Establish the database connection
 con.connect(function (err) {
     if (err) {
         console.error(err);
-        process.exit(1); // Exit the process if the connection cannot be established
+        process.exit(1);
     }
     console.log("Connected to nigusfigus database!");
 });
 
-// Gracefully close the database connection when the process is terminated
 process.on('exit', function () {
     con.end();
 });
