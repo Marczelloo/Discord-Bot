@@ -34,6 +34,32 @@ async function bassBoost() {
     });
 }
 
+async function bassBoostV2() {
+    const input = path.join(__dirname, "output.ogg");
+    const output = path.join(__dirname, "eqOutput.ogg");
+
+    return new Promise((resolve, reject) => {
+        fs.access(input, fs.constants.F_OK | fs.constants.R_OK, (err) => {
+            if (err) {
+                console.error(`Cannot open song file: ${err}`);
+                reject(err);
+            } else {
+                ffmmpeg(input)
+                .audioFilter('equalizer=f=40:width_type=h:width=50:g=10')
+                    .on('error', (err) => {
+                        console.error(err);
+                        reject(err);
+                    })
+                    .on('end', () => {
+                        console.log("Bass boost v2 finished");
+                        resolve();
+                    })
+                    .save(output);
+            }
+        });
+    });
+}
+
 async function earrape()
 {
     const input = path.join(__dirname, "output.ogg");
@@ -239,6 +265,7 @@ async function inverted()
 
 module.exports = {
     bassBoost: bassBoost,
+    bassBoostV2: bassBoostV2,
     earrape: earrape,
     nightcore: nightcore,
     slowReverb: slowReverb,

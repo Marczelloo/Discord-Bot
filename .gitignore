@@ -1,4 +1,8 @@
+# FILEPATH: /c:/ImportantShit/VisualStudioCode/NigusFigus/NigusFigus/.gitignore
+# BEGIN: abpxx6d04wxr
 node_modules
 config.json
 .eslintrc.json
 .env
+commands/music/cookies.txt
+# END: abpxx6d04wxr

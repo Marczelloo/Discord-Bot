@@ -93,24 +93,24 @@ catch (err)
 }
 
 
-// cron.schedule('0 9 * * *', function() {
-// 	console.log("Scheduler on 9:00");
-//     schedulePlay('morning');
-// }, {
-//     timezone: 'Europe/Warsaw'
-// });
+cron.schedule('0 9 * * *', function() {
+	console.log("Scheduler on 9:00");
+    schedulePlay('morning');
+}, {
+    timezone: 'Europe/Warsaw'
+});
 
 
-// cron.schedule('40 18 * * *', function() {
-// 	console.log("Scheduler on 18:37");
-// 	schedulePlay('evening');
-// }, {
-// 	timezone: 'Europe/Warsaw'
-// });
+cron.schedule('37 21 * * *', function() {
+	console.log("Scheduler on 21:37");
+	schedulePlay('evening');
+}, {
+	timezone: 'Europe/Warsaw'
+});
 
 client.login(token);
 
 // setTimeout(() => {
 // 	console.log("Scheduler on 9:00");
-// 	schedulePlay('evening');
+// 	schedulePlay('morning');
 // }, 10000);

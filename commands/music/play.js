@@ -6,10 +6,30 @@ const ytdl = require('ytdl-core');
 const ytsr = require('ytsr');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 
 const globals  = require('../../global.js');
 
-const { bassBoost, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted } = require('./eqFunctions.js');
+const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted } = require('./eqFunctions.js');
+const { setTimeout } = require('timers');
+
+const cookiesPath = path.resolve(__dirname, 'cookies.txt');
+
+if (!fs.existsSync(cookiesPath)) {
+    fs.writeFileSync(cookiesPath, '', 'utf8');
+}
+
+const cookiesFileContent = fs.readFileSync(cookiesPath, 'utf8');
+const cookiesLines = cookiesFileContent.split('\n');
+
+let cookies = '';
+cookiesLines.forEach(line => {
+    const parts = line.split('\t');
+    if (parts.length === 7) {
+        cookies += `${parts[5]}=${parts[6]}; `;
+    }
+});
+
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -92,60 +112,139 @@ module.exports = {
         }
 
         if (url) {
-            const songInfo = await ytdl.getInfo(url);
-            const newSong = {
-                title: songInfo.videoDetails.title,
-                url: songInfo.videoDetails.video_url,
-                image: songInfo.videoDetails.thumbnails[0].url,
-                length: songInfo.videoDetails.lengthSeconds
-            };
-               
-            globals.queue.push(newSong);
-            
-            const embed = new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setAuthor({ name: 'Song added to queue:' })
-            .setTitle(newSong.title)
-            .setURL(newSong.url)
-            .setImage(newSong.image)
-            .setTimestamp()
 
-            interaction.editReply({ embeds: [embed] });
-            
-        }
-
-        if (song) {
-            const searchResults = await ytsr(song, { limit: 1 });
-            const video = searchResults.items[0];
-
-            if (!video) {
+            let songInfo;
+            try
+            {
+                songInfo = await ytdl.getInfo(url);
+            }
+            catch(e)
+            {
+                console.error(e);
                 const embed = new EmbedBuilder()
-                    .setColor(0xff0000)
-                    .setTitle("No search results found for the song")
-                    .setTimestamp();
+                .setColor(0xff0000)
+                .setTitle("Invalid YouTube URL")
+                .setTimestamp()
+
+                await interaction.editReply({ embeds: [embed] });
+                songInfo = null;
+            }
+
+            if(songInfo === null || songInfo === undefined)
+            {
+                const embed = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle("No search results found for the song")
+                .setTimestamp();
+                
+                await interaction.editReply({ embeds: [embed] });
+            }
+            else if(songInfo.videoDetails.isLiveContent)
+            {
+                const embed = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle("You can't play live content")
+                .setTimestamp()
 
                 await interaction.editReply({ embeds: [embed] });
                 return;
             }
+            else if(songInfo.related_videos.length > 1)
+            {
+                let fields = [];
+                await Promise.all(songInfo.related_videos.reverse().map(async (video) => {
+                    const url = await ytsr(video.title, { limit: 1 });
 
-            const newSong = {
-                title: video.title,
-                url: video.url,
-                image: video.bestThumbnail.url,
-                length: video.duration,
-            };
+                    const newSong = {
+                        title: video.title,
+                        url: url.items[0].url,
+                        image: video.thumbnails[0].url,
+                        length: video.length_seconds
+                    };
 
-            globals.queue.push(newSong);
+                    fields.push({ name: newSong.title, value: `${url.items[0].url}` });
 
-            const embed = new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setAuthor({ name: 'Song added to queue:' })
-            .setTitle(newSong.title)
-            .setURL(newSong.url)
-            .setImage(newSong.image)
-            .setTimestamp()
+                    globals.queue.push(newSong);
 
-            await interaction.editReply({ embeds: [embed] });
+                    console.log(globals.queue);
+                }));
+
+                const embed = new EmbedBuilder()
+                    .setColor(0x00ff00)
+                    .setAuthor({ name: 'Songs added to queue:' })
+                    .addFields(fields)
+                    .setTimestamp()
+
+                interaction.editReply({ embeds: [embed] });
+            }
+            else 
+            {
+                const newSong = {
+                    title: songInfo.videoDetails.title,
+                    url: songInfo.videoDetails.video_url,
+                    image: songInfo.videoDetails.thumbnails[0].url,
+                    length: songInfo.videoDetails.lengthSeconds
+                };
+                   
+                globals.queue.shift(newSong);
+                
+                const embed = new EmbedBuilder()
+                .setColor(0x00ff00)
+                .setAuthor({ name: 'Song added to queue:' })
+                .setTitle(newSong.title)
+                .setURL(newSong.url)
+                .setImage(newSong.image)
+                .setTimestamp()
+    
+                interaction.editReply({ embeds: [embed] });
+            }        
+        }
+
+        if (song) {
+            const searchResults = await ytsr(song, { limit: 1 });
+
+            const video = searchResults.items[0];
+            
+            if (!video) {
+                const embed = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle("No search results found for the song")
+                .setTimestamp();
+                
+                await interaction.editReply({ embeds: [embed] });
+                return;
+            }
+
+            if(searchResults.items[0].type === 'live')
+            {
+                const embed = new EmbedBuilder()
+                .setColor(0xff0000)
+                .setTitle("You can't play live content")
+                .setTimestamp()
+
+                await interaction.editReply({ embeds: [embed] });
+            }
+            else
+            {
+                const newSong = {
+                    title: video.title,
+                    url: video.url,
+                    image: video.bestThumbnail.url,
+                    length: video.duration,
+                };
+    
+                globals.queue.push(newSong);
+    
+                const embed = new EmbedBuilder()
+                .setColor(0x00ff00)
+                .setAuthor({ name: 'Song added to queue:' })
+                .setTitle(newSong.title)
+                .setURL(newSong.url)
+                .setImage(newSong.image)
+                .setTimestamp()
+    
+                await interaction.editReply({ embeds: [embed] });
+            }
         }
 
         if(globals.firstCommandTimestamp === null)
@@ -175,7 +274,7 @@ module.exports = {
 
 
                 let formattedTime;
-                if(globals.queue[0].length.includes(":"))
+                if(globals.queue[0].length.toString().includes(":"))
                 {
                     formattedTime = globals.queue[0].length;
                 }
@@ -215,9 +314,46 @@ module.exports = {
                 
                 outputFilePath = path.resolve(__dirname, 'output.ogg');  
         
-                const stream = ytdl(globals.queue[0].url, { filter: 'audioonly', quality: 'highestaudio' });
+                let stream;
+                if(cookies == null)
+                {
+                    stream = ytdl(globals.queue[0].url, { filter: 'audioonly', quality: 'highestaudio' });
+                }
+                else
+                {
+                    try 
+                    {
+                        stream = ytdl(globals.queue[0].url, {
+                            filter: 'audioonly',
+                            quality: 'highestaudio',
+                            requestOptions: {
+                                headers: {
+                                    'Cookie': cookies,
+                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
+                                }
+                            }
+                        });
+                    } 
+                    catch (error) 
+                    {
+                        if (error.statusCode === 410) {
+                            exec(`youtube-dl -x --audio-format vorbis -o "output.%(ext)s" ${globals.queue[0].url}`, (error, stdout, stderr) => {
+                                if (error) {
+                                    console.error(`exec error: ${error}`);
+                                    return;
+                                }
+                                console.log(`stdout: ${stdout}`);
+                                console.error(`stderr: ${stderr}`);
+                            });
+                        } else {
+                            console.error(error);
+                        }
+                        return;
+                    }
+                }
+
                 const writer = stream.pipe(fs.createWriteStream(outputFilePath));
-        
+
                 writer.on('finish', async () => {
                     const eq = globals.eqEffect;
                 
@@ -227,6 +363,10 @@ module.exports = {
                         {
                             case 'bassboost':
                                 await bassBoost();
+                                outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
+                                break;
+                            case 'bass-v2':
+                                await bassBoostV2();
                                 outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
                                 break;
                             case 'earrape':
@@ -404,6 +544,7 @@ module.exports = {
                     playNextSong(); 
                     return;
                 }
+
                 if(!globals.isSkipped)
                 {
                     console.log("Player idle");
@@ -433,7 +574,8 @@ module.exports = {
                             break;
                     }
 
-                    if (globals.queue.length === 0) {
+                    if (globals.queue.length === 0) 
+                    {
                         interaction.channel.messages
                             .fetch(globals.nowPlayingMessage)
                             .then((message) => {
@@ -463,6 +605,22 @@ module.exports = {
                             .catch((error) => {
                                 console.error('Error fetching messages:', error);
                             });
+                        
+                        setTimeout(() => {
+                            connection.disconnect();
+                            globals.player = null;
+                            globals.resource = null;
+                            globals.queue = [];
+                            globals.playedSongs = [];
+                            globals.firstCommandTimestamp = null;
+                            globals.nowPlayingMessage = null;
+                            globals.eqEffect = null;
+                            globals.loop = globals.LoopType.NO_LOOP;
+                            globals.shuffle = false;
+                            globals.isSkipped = false;
+                            globals.schedulerPlaying = false;
+
+                        }, 300000)
                     }
                     else
                     {

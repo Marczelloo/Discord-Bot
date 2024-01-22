@@ -25,6 +25,7 @@
     "typescript": "^5.0.4",
     "youtube-dl-exec": "^2.5.4",
     "ytdl-core": "^4.11.5",
+    "ytpl": "^2.3.0",
     "ytsr": "^3.8.4"
   },
   "devDependencies": {

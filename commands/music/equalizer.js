@@ -14,6 +14,7 @@ module.exports = {
             .addChoices(
                 { name: 'default', value: 'none' },
                 { name : 'BassBoost', value: 'bassboost' },
+                { name: 'BassBostV2', value: 'bass-v2' },
                 { name: 'EarRape', value: 'earrape' },
                 { name: '8bit', value: 'eightBit'},
                 { name: 'Nightcore', value: 'nightcore' },
@@ -47,17 +48,6 @@ module.exports = {
                 interaction.reply({ embeds: [embed] });
                 return;           
             }
-
-            // if(globals.player == null || globals.player.state.status !== AudioPlayerStatus.Playing)
-            // {
-            //     const embed = new EmbedBuilder()
-            //     .setColor(0xff0000)
-            //     .setTitle("Player is not active! Playe song before setting equalizer!")
-            //     .setTimestamp()
-
-            //     interaction.reply({ embeds: [embed] });
-            //     return;
-            // }
 
             const preset = interaction.options.getString('preset');
             if(!preset)

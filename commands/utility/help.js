@@ -144,7 +144,6 @@ module.exports = {
                 index = 0;
         
                 row.components[0].setDisabled(true);
-
                 await interaction.reply({ embeds: [helpEmbed], components: [row], ephemeral: true });
                 break;
             case 'utility':
