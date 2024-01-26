@@ -9,6 +9,8 @@ module.exports = {
     originalQueue: [],
     playedSongs: [],
     firstCommandTimestamp: null,
+    playEarlier: false,
+    ageRestricted: false,
     player: null,
     resource: null,
     client: null,
