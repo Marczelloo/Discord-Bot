@@ -14,24 +14,6 @@ const globals  = require('../../global.js');
 const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require('./eqFunctions.js');
 const { setTimeout } = require('timers');
 
-const cookiesPath = path.resolve(__dirname, 'cookies.txt');
-
-if (!fs.existsSync(cookiesPath)) {
-    fs.writeFileSync(cookiesPath, '', 'utf8');
-}
-
-const cookiesFileContent = fs.readFileSync(cookiesPath, 'utf8');
-const cookiesLines = cookiesFileContent.split('\n');
-
-let cookies = '';
-cookiesLines.forEach(line => {
-    const parts = line.split('\t');
-    if (parts.length === 7) {
-        cookies += `${parts[5]}=${parts[6]}; `;
-    }
-});
-
-
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('play')
@@ -112,6 +94,8 @@ module.exports = {
             return;
         }
 
+        globals.commandChannel = interaction.channel;
+
         if (url) {
 
             let songInfo;
@@ -151,6 +135,7 @@ module.exports = {
                 .setTimestamp();
                 
                 await interaction.editReply({ embeds: [embed] });
+                return;
             }
             else if(songInfo.live)
             {
@@ -212,59 +197,75 @@ module.exports = {
         }
 
         if (song) {
-            const searchResults = await ytsr(song, { limit: 1 });
-            const video = searchResults.items[0];
-                        
-            await YouTube.getVideo(video.url)
-            .then(video => {
-                if(video.nsfw)
-                    globals.ageRestricted = true;
+            const findSongByName = async (song, voiceCom) => {
+                const searchResults = await ytsr(song, { limit: 1 });
+                const video = searchResults.items[0];
+                            
+                await YouTube.getVideo(video.url)
+                .then(video => {
+                    if(video.nsfw)
+                        globals.ageRestricted = true;
+                    else
+                        globals.ageRestricted = false;
+                })
+                .catch(console.error);
+    
+                if (!video) {
+                    const embed = new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle("No search results found for the song")
+                    .setTimestamp();
+                    
+                    await interaction.editReply({ embeds: [embed] });
+                    return;
+                }
+    
+                if(searchResults.items[0].type === 'live')
+                {
+                    const embed = new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle("You can't play live content")
+                    .setTimestamp()
+    
+                    await interaction.editReply({ embeds: [embed] });
+                    return;
+                }
                 else
-                    globals.ageRestricted = false;
-            })
-            .catch(console.error);
-
-            if (!video) {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("No search results found for the song")
-                .setTimestamp();
-                
-                await interaction.editReply({ embeds: [embed] });
-                return;
+                {
+                    const newSong = {
+                        title: video.title,
+                        url: video.url,
+                        image: video.bestThumbnail.url,
+                        length: video.duration,
+                    };
+        
+                    globals.queue.push(newSong);
+        
+                    const embed = new EmbedBuilder()
+                    .setColor(0x00ff00)
+                    .setAuthor({ name: 'Song added to queue:' })
+                    .setTitle(newSong.title)
+                    .setURL(newSong.url)
+                    .setImage(newSong.image)
+                    .setTimestamp()
+        
+                    if(voiceCom)
+                    {
+                        await globals.commandChannel.send({ embeds: [embed] });
+                    }
+                    else
+                    {
+                        await interaction.editReply({ embeds: [embed] });
+                    }
+                }
             }
 
-            if(searchResults.items[0].type === 'live')
-            {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("You can't play live content")
-                .setTimestamp()
+            await findSongByName(song, false);
 
-                await interaction.editReply({ embeds: [embed] });
-            }
-            else
-            {
-                const newSong = {
-                    title: video.title,
-                    url: video.url,
-                    image: video.bestThumbnail.url,
-                    length: video.duration,
-                };
-    
-                globals.queue.push(newSong);
-    
-                const embed = new EmbedBuilder()
-                .setColor(0x00ff00)
-                .setAuthor({ name: 'Song added to queue:' })
-                .setTitle(newSong.title)
-                .setURL(newSong.url)
-                .setImage(newSong.image)
-                .setTimestamp()
-    
-                await interaction.editReply({ embeds: [embed] });
-            }
+            module.exports = findSongByName;            
         }
+
+        globals.guildId = interaction.guild.id;
 
         if(globals.firstCommandTimestamp === null)
         {
@@ -366,7 +367,6 @@ module.exports = {
                 }
                 else
                 { 
-                    console.log("test");
                     const stream = ytdl(globals.queue[0].url, { filter: 'audioonly', quality: 'highestaudio' });
                     const writer = stream.pipe(fs.createWriteStream(outputFilePath));
                 

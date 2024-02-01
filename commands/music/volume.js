@@ -50,25 +50,39 @@ module.exports = {
             }
 
             const volume = interaction.options.getNumber('volume');
-            if(volume < 0 || volume > 500)
-            {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("Volume must be between 0 and 100!")
-                .setTimestamp()
 
-                interaction.reply({ embeds: [embed] });
-                return;
+            const changeVolume = async (volume, voiceCom) => {
+                if(volume < 0 || volume > 500)
+                {
+                    const embed = new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle("Volume must be between 0 and 100!")
+                    .setTimestamp()
+    
+                    interaction.reply({ embeds: [embed] });
+                    return;
+                }
+    
+                globals.resource.volume.setVolume(volume / 10);
+    
+                const embed = new EmbedBuilder()
+                .setColor(0x00ff00)
+                .setTitle(`Volume set to ${volume}`)
+                .setTimestamp()
+    
+                if(voiceCom)
+                {
+                    globals.commandChannel.send({ embeds: [embed] });
+                }
+                else
+                {
+                    await interaction.reply({ embeds: [embed] });
+                }
+
             }
 
-            globals.resource.volume.setVolume(volume / 10);
+            module.exports = changeVolume;
 
-            const embed = new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setTitle(`Volume set to ${volume}`)
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
-        
+            changeVolume(volume, false)        
         }
 }

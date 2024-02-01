@@ -13,6 +13,14 @@ module.exports = {
 
     async execute(interaction) {
         const title = interaction.options.getString('title');
+
+        const embed = new EmbedBuilder()
+        .setColor(0xff0000)
+        .setTitle('Task deletion failed')
+        .setDescription('Error: Title is required')
+        .setTimestamp();
+        
+        if(!title) return interaction.reply({ embeds: [embed] }); 
     
         let errors = [];
         try {

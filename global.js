@@ -9,6 +9,8 @@ module.exports = {
     originalQueue: [],
     playedSongs: [],
     firstCommandTimestamp: null,
+    guildId: null,
+    commandChannel: null,
     playEarlier: false,
     ageRestricted: false,
     player: null,
