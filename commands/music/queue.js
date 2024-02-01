@@ -66,7 +66,7 @@ module.exports = {
 
         const queue = globals.queue;
         let page = interaction.options.getInteger('page') || 1;
-        const itemsPerPage = 3;
+        const itemsPerPage = 20;
         const pages = Math.ceil(queue.length / itemsPerPage);
 
         if(queue.length == 0)

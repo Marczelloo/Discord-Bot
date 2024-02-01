@@ -1,35 +1,18 @@
-const { SlashCommandBuilder, EmbedBuilder, InteractionType } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { createAudioPlayer, createAudioResource, joinVoiceChannel, StreamType, AudioPlayerStatus } = require('@discordjs/voice');
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
+const YouTube = require('youtube-sr').default;
 const ytdl = require('ytdl-core');
 const ytsr = require('ytsr');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
+const util = require('util');
 
 const globals  = require('../../global.js');
 
-const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted } = require('./eqFunctions.js');
+const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require('./eqFunctions.js');
 const { setTimeout } = require('timers');
-
-const cookiesPath = path.resolve(__dirname, 'cookies.txt');
-
-if (!fs.existsSync(cookiesPath)) {
-    fs.writeFileSync(cookiesPath, '', 'utf8');
-}
-
-const cookiesFileContent = fs.readFileSync(cookiesPath, 'utf8');
-const cookiesLines = cookiesFileContent.split('\n');
-
-let cookies = '';
-cookiesLines.forEach(line => {
-    const parts = line.split('\t');
-    if (parts.length === 7) {
-        cookies += `${parts[5]}=${parts[6]}; `;
-    }
-});
-
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -111,24 +94,38 @@ module.exports = {
             return;
         }
 
+        globals.commandChannel = interaction.channel;
+
         if (url) {
 
             let songInfo;
-            try
-            {
-                songInfo = await ytdl.getInfo(url);
-            }
-            catch(e)
-            {
-                console.error(e);
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("Invalid YouTube URL")
-                .setTimestamp()
+            let playlist;
 
-                await interaction.editReply({ embeds: [embed] });
-                songInfo = null;
+           //songInfo = await ytdl.getInfo(url); 
+
+            await YouTube.getVideo(url)
+            .then(video => {
+                songInfo = video;
+            })
+            .catch(console.error);
+
+            if(songInfo.nsfw)
+                globals.ageRestricted = true;
+            
+            else
+                globals.ageRestricted = false;
+            
+            const youtubePlaylistPattern = /^https?:\/\/(www\.)?youtube\.com\/playlist\?list=[a-zA-Z0-9_-]+$/;
+    
+            if (youtubePlaylistPattern.test(url)) 
+            {
+                playlist = true;
             }
+            else
+            {
+                playlist = false;
+            }
+
 
             if(songInfo === null || songInfo === undefined)
             {
@@ -138,8 +135,9 @@ module.exports = {
                 .setTimestamp();
                 
                 await interaction.editReply({ embeds: [embed] });
+                return;
             }
-            else if(songInfo.videoDetails.isLiveContent)
+            else if(songInfo.live)
             {
                 const embed = new EmbedBuilder()
                 .setColor(0xff0000)
@@ -149,7 +147,7 @@ module.exports = {
                 await interaction.editReply({ embeds: [embed] });
                 return;
             }
-            else if(songInfo.related_videos.length > 1)
+            else if(playlist) 
             {
                 let fields = [];
                 await Promise.all(songInfo.related_videos.reverse().map(async (video) => {
@@ -157,16 +155,14 @@ module.exports = {
 
                     const newSong = {
                         title: video.title,
-                        url: url.items[0].url,
-                        image: video.thumbnails[0].url,
+                        url: url.items[0].url, 
+                        image: url.bestThumbnail.url,
                         length: video.length_seconds
                     };
 
                     fields.push({ name: newSong.title, value: `${url.items[0].url}` });
 
                     globals.queue.push(newSong);
-
-                    console.log(globals.queue);
                 }));
 
                 const embed = new EmbedBuilder()
@@ -180,13 +176,13 @@ module.exports = {
             else 
             {
                 const newSong = {
-                    title: songInfo.videoDetails.title,
-                    url: songInfo.videoDetails.video_url,
-                    image: songInfo.videoDetails.thumbnails[0].url,
-                    length: songInfo.videoDetails.lengthSeconds
+                    title: songInfo.title,
+                    url: url,
+                    image: songInfo.thumbnail.url,
+                    length: songInfo.durationFormatted,
                 };
                    
-                globals.queue.shift(newSong);
+                globals.queue.push(newSong);
                 
                 const embed = new EmbedBuilder()
                 .setColor(0x00ff00)
@@ -201,51 +197,75 @@ module.exports = {
         }
 
         if (song) {
-            const searchResults = await ytsr(song, { limit: 1 });
-
-            const video = searchResults.items[0];
-            
-            if (!video) {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("No search results found for the song")
-                .setTimestamp();
-                
-                await interaction.editReply({ embeds: [embed] });
-                return;
+            const findSongByName = async (song, voiceCom) => {
+                const searchResults = await ytsr(song, { limit: 1 });
+                const video = searchResults.items[0];
+                            
+                await YouTube.getVideo(video.url)
+                .then(video => {
+                    if(video.nsfw)
+                        globals.ageRestricted = true;
+                    else
+                        globals.ageRestricted = false;
+                })
+                .catch(console.error);
+    
+                if (!video) {
+                    const embed = new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle("No search results found for the song")
+                    .setTimestamp();
+                    
+                    await interaction.editReply({ embeds: [embed] });
+                    return;
+                }
+    
+                if(searchResults.items[0].type === 'live')
+                {
+                    const embed = new EmbedBuilder()
+                    .setColor(0xff0000)
+                    .setTitle("You can't play live content")
+                    .setTimestamp()
+    
+                    await interaction.editReply({ embeds: [embed] });
+                    return;
+                }
+                else
+                {
+                    const newSong = {
+                        title: video.title,
+                        url: video.url,
+                        image: video.bestThumbnail.url,
+                        length: video.duration,
+                    };
+        
+                    globals.queue.push(newSong);
+        
+                    const embed = new EmbedBuilder()
+                    .setColor(0x00ff00)
+                    .setAuthor({ name: 'Song added to queue:' })
+                    .setTitle(newSong.title)
+                    .setURL(newSong.url)
+                    .setImage(newSong.image)
+                    .setTimestamp()
+        
+                    if(voiceCom)
+                    {
+                        await globals.commandChannel.send({ embeds: [embed] });
+                    }
+                    else
+                    {
+                        await interaction.editReply({ embeds: [embed] });
+                    }
+                }
             }
 
-            if(searchResults.items[0].type === 'live')
-            {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("You can't play live content")
-                .setTimestamp()
+            await findSongByName(song, false);
 
-                await interaction.editReply({ embeds: [embed] });
-            }
-            else
-            {
-                const newSong = {
-                    title: video.title,
-                    url: video.url,
-                    image: video.bestThumbnail.url,
-                    length: video.duration,
-                };
-    
-                globals.queue.push(newSong);
-    
-                const embed = new EmbedBuilder()
-                .setColor(0x00ff00)
-                .setAuthor({ name: 'Song added to queue:' })
-                .setTitle(newSong.title)
-                .setURL(newSong.url)
-                .setImage(newSong.image)
-                .setTimestamp()
-    
-                await interaction.editReply({ embeds: [embed] });
-            }
+            module.exports = findSongByName;            
         }
+
+        globals.guildId = interaction.guild.id;
 
         if(globals.firstCommandTimestamp === null)
         {
@@ -264,7 +284,7 @@ module.exports = {
                 globals.player = createAudioPlayer();
             }
 
-            let outputFilePath;  // Define outputFilePath here
+            let outputFilePath;
 
             async function playNextSong() {
                 if (globals.queue.length === 0) {
@@ -313,48 +333,47 @@ module.exports = {
                 .setTimestamp()
                 
                 outputFilePath = path.resolve(__dirname, 'output.ogg');  
-        
-                let stream;
-                if(cookies == null)
+
+                if(globals.ageRestricted)
                 {
-                    stream = ytdl(globals.queue[0].url, { filter: 'audioonly', quality: 'highestaudio' });
+                    const exec = util.promisify(require('child_process').exec);
+
+                    async function executeCommand(command) 
+                    {
+                        try 
+                        {
+                            const { stdout, stderr } = await exec(command);
+                            console.log(`Audio downloaded successfully: ${stdout}`);
+                            play();
+                        } 
+                        catch (error) 
+                        {
+                            console.error(`Error executing command: ${error}`);
+    
+                            const embed = new EmbedBuilder()
+                            .setColor(0xff0000)
+                            .setTitle("Error downloading audio")
+                            .setTimestamp()
+                            
+                            await interaction.editReply({ embeds: [embed] });
+                            globals.queue.shift();
+                            playNextSong();
+                        }
+                    }
+    
+                    const ytdlp_path =path.resolve(__dirname, "yt-dlp.exe"); 
+                    const command = `${ytdlp_path} -x --audio-format vorbis -o ${path.resolve(__dirname, "output")} ${globals.queue[0].url}`;
+                    await executeCommand(command);
                 }
                 else
-                {
-                    try 
-                    {
-                        stream = ytdl(globals.queue[0].url, {
-                            filter: 'audioonly',
-                            quality: 'highestaudio',
-                            requestOptions: {
-                                headers: {
-                                    'Cookie': cookies,
-                                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3',
-                                }
-                            }
-                        });
-                    } 
-                    catch (error) 
-                    {
-                        if (error.statusCode === 410) {
-                            exec(`youtube-dl -x --audio-format vorbis -o "output.%(ext)s" ${globals.queue[0].url}`, (error, stdout, stderr) => {
-                                if (error) {
-                                    console.error(`exec error: ${error}`);
-                                    return;
-                                }
-                                console.log(`stdout: ${stdout}`);
-                                console.error(`stderr: ${stderr}`);
-                            });
-                        } else {
-                            console.error(error);
-                        }
-                        return;
-                    }
+                { 
+                    const stream = ytdl(globals.queue[0].url, { filter: 'audioonly', quality: 'highestaudio' });
+                    const writer = stream.pipe(fs.createWriteStream(outputFilePath));
+                
+                    writer.on('finish', () => play())
                 }
 
-                const writer = stream.pipe(fs.createWriteStream(outputFilePath));
-
-                writer.on('finish', async () => {
+                async function play()  {
                     const eq = globals.eqEffect;
                 
                     if(eq)
@@ -393,10 +412,16 @@ module.exports = {
                                 await inverted();
                                 outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
                                 break;
+                            case "toiletAtClub":
+                                await toiletAtClub();
+                                outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
+                                break;
                             default:
                                 break;
                         }
                     }
+
+
 
                     const resource = createAudioResource(outputFilePath, { inputType: StreamType.OggOpus, inlineVolume: true });
                     resource.volume.setVolume(0.05);
@@ -413,26 +438,63 @@ module.exports = {
                     
                     if (globals.nowPlayingMessage) 
                     {
+                        console.log("test 1");
                         interaction.channel.messages.fetch(globals.nowPlayingMessage)
                             .then(message => {
                                 if (message) message.delete().catch(console.error);
+
+                                try
+                                {
+                                    if(globals.player.AudioPlayerStatus === AudioPlayerStatus.Paused)
+                                    {
+                                        interaction.channel.send({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' })
+                                        .then(nowPlayingMessage => {
+                                            globals.nowPlayingMessage = nowPlayingMessage.id;
+                                        })
+                                        .catch(console.error);
+                                    }
+                                    else
+                                    {
+                                        interaction.channel.send({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' })
+                                        .then(nowPlayingMessage => {
+                                            globals.nowPlayingMessage = nowPlayingMessage.id;
+                                        })
+                                        .catch(console.error);
+                                    }
+                                }
+                                catch(err)
+                                {
+                                    if (err.code === 10008) 
+                                    {
+                                        console.error("The message has already been deleted or does not exist.");
+                                    } 
+                                    else 
+                                    {
+                                        console.error(err);
+                                    }
+                                }
                             }).catch(console.error);
+                    }
+                    else
+                    {
+                        if (globals.player.AudioPlayerStatus === AudioPlayerStatus.Paused) 
+                        {
+                            console.log("test 2");
+                            interaction.channel.send({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' })
+                                .then(nowPlayingMessage => {
+                                    globals.nowPlayingMessage = nowPlayingMessage.id;
+                                }).catch(console.error);
+                        } 
+                        else 
+                        {
+                            console.log("test 3");
+                            interaction.channel.send({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' })
+                                .then(nowPlayingMessage => {
+                                    globals.nowPlayingMessage = nowPlayingMessage.id;
+                                }).catch(console.error);
+                        }
                     }
                     
-                    if (globals.player.AudioPlayerStatus === AudioPlayerStatus.Paused) 
-                    {
-                        interaction.channel.send({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' })
-                            .then(nowPlayingMessage => {
-                                globals.nowPlayingMessage = nowPlayingMessage.id;
-                            }).catch(console.error);
-                    } 
-                    else 
-                    {
-                        interaction.channel.send({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' })
-                            .then(nowPlayingMessage => {
-                                globals.nowPlayingMessage = nowPlayingMessage.id;
-                            }).catch(console.error);
-                    }
 
                     const filter = i => i.user.id === interaction.user.id;
                     try
@@ -451,12 +513,10 @@ module.exports = {
                                     return;
                                 }
                             
-                                globals.queue.unshift(globals.playedSongs[0])
-                                globals.playedSongs.shift();
+                                globals.playEarlier = true;
+                                
                                 globals.player.stop();
                                 
-
-
                                 nowPlayingEmbedFields[1].value = 'Playing';
                                 nowPlayingEmbed.setFields(nowPlayingEmbedFields);
                                 collector.stop();
@@ -532,9 +592,10 @@ module.exports = {
                     }
                     catch(err)
                     {
+                        console.error("JEBANE INTERAKCJE NA PRZYCISKACH");
                         console.error(err);
                     }
-                });
+                };
             }
         
             globals.player.on('idle', () => {
@@ -550,28 +611,37 @@ module.exports = {
                     console.log("Player idle");
                     globals.isSkipped = true;
     
-                    switch(globals.loop)
+                    if(globals.playEarlier)
                     {
-                        case globals.LoopType.LOOP_QUEUE:
-                            globals.queue.push(globals.queue[0]);
-                            globals.playedSongs.unshift(globals.queue[0])
-                            globals.queue.shift();
-                            break;
-                        case globals.LoopType.LOOP_SONG:
-                            globals.queue.unshift(globals.queue[0]);
-                            globals.queue.shift();
-                            break;
-                        case globals.LoopType.NO_LOOP:
-                            globals.playedSongs.unshift(globals.queue[0])
-                            globals.queue.shift(); 
-                            globals.originalQueue.filter(song => song !== globals.queue[0]);
-                            break;
-                        default:
-                            globals.playedSongs.unshift(globals.queue[0])
-                            globals.queue.shift(); 
-                            globals.originalQueue.filter(song => song !== globals.queue[0]);
-
-                            break;
+                        globals.playEarlier = false;
+                        globals.queue.unshift(globals.playedSongs[0])
+                        globals.playedSongs.shift();
+                    }
+                    else
+                    {
+                        switch(globals.loop)
+                        {
+                            case globals.LoopType.LOOP_QUEUE:
+                                globals.queue.push(globals.queue[0]);
+                                globals.playedSongs.unshift(globals.queue[0])
+                                globals.queue.shift();
+                                break;
+                            case globals.LoopType.LOOP_SONG:
+                                globals.queue.unshift(globals.queue[0]);
+                                globals.queue.shift();
+                                break;
+                            case globals.LoopType.NO_LOOP:
+                                globals.playedSongs.unshift(globals.queue[0])
+                                globals.queue.shift(); 
+                                globals.originalQueue.filter(song => song !== globals.queue[0]);
+                                break;
+                            default:
+                                globals.playedSongs.unshift(globals.queue[0])
+                                globals.queue.shift(); 
+                                globals.originalQueue.filter(song => song !== globals.queue[0]);
+    
+                                break;
+                        }
                     }
 
                     if (globals.queue.length === 0) 
@@ -592,15 +662,14 @@ module.exports = {
                                     (message) =>
                                         message.author.bot && message.createdTimestamp > globals.firstCommandTimestamp
                                 );
-
                                 channel
-                                    .bulkDelete(botMessages, true)
-                                    .then(() => {
-                                        console.log('Bot messages and replies deleted');
-                                    })
-                                    .catch((error) => {
-                                        console.error('Error deleting bot messages and replies:', error);
-                                    });
+                                .bulkDelete(botMessages, true)
+                                .then(() => {
+                                    console.log('Bot messages and replies deleted');
+                                })
+                                .catch((error) => {
+                                    console.error('Error deleting bot messages and replies:', error);
+                                });
                             })
                             .catch((error) => {
                                 console.error('Error fetching messages:', error);
@@ -621,6 +690,11 @@ module.exports = {
                             globals.schedulerPlaying = false;
 
                         }, 300000)
+                    }
+                    else if(globals.playEarlier)
+                    {
+                        globals.playEarlier = false;
+                        playNextSong();
                     }
                     else
                     {

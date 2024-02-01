@@ -1,10 +1,13 @@
-const fs = require('fs');
-const path = require('path');
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+
 const { token } = require('./config.json');
 const globals = require('./global.js');
-const vcLeaveReset = require('./commands/music/vcLeaveReset.js');
+
+const fs = require('fs');
+const path = require('path');
 const cron = require('node-cron');
+
+const vcLeaveReset = require('./commands/music/vcLeaveReset.js');
 const { schedulePlay }  = require('./commands/music/playScheduler.js');
 
 // Create a new client instance
@@ -67,6 +70,7 @@ for(const file of eventsFiles){
 }
 
 client.on('voiceStateUpdate', (oldState, newState) => {
+	
 	if(oldState.member.user.id === client.user.id && newState.channelId === null)
 	{
 		vcLeaveReset();
@@ -110,7 +114,3 @@ cron.schedule('37 21 * * *', function() {
 
 client.login(token);
 
-// setTimeout(() => {
-// 	console.log("Scheduler on 9:00");
-// 	schedulePlay('morning');
-// }, 10000);

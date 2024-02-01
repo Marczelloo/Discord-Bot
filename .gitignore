@@ -4,5 +4,5 @@ node_modules
 config.json
 .eslintrc.json
 .env
-commands/music/cookies.txt
+commands/music/schedulers.json
 # END: abpxx6d04wxr

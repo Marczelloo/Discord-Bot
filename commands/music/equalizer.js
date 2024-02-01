@@ -20,7 +20,8 @@ module.exports = {
                 { name: 'Nightcore', value: 'nightcore' },
                 { name: 'SlowAndReverbed', value: 'slowReverb' },
                 { name: 'DolbyRetardos', value: 'dolbyRetardos' },
-                { name: 'Inverted', value: 'inverted'}
+                { name: 'Inverted', value: 'inverted'},
+                { name: 'toiletAtClub', value: 'toiletAtClub' },
             )
         ),
 

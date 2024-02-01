@@ -133,6 +133,8 @@ async function play(scheduleTime) {
 
                     globals.player.on('idle', () => {
                         console.log('idle');
+
+                        globals.queue.shift();
                         if (globals.queue.length === 0) 
                         {
                             voiceChannel.disconnect();
