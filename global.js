@@ -23,5 +23,6 @@ module.exports = {
     shuffle: false, //
     nowPlayingMessage: null,
     schedulerPlaying: false,
+    timeout: null,
 };
 

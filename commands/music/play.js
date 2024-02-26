@@ -13,6 +13,7 @@ const globals  = require('../../global.js');
 
 const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require('./eqFunctions.js');
 const { setTimeout } = require('timers');
+const { skip } = require('node:test');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -35,21 +36,40 @@ module.exports = {
 
         const playingRow = new ActionRowBuilder();
         const pausedRow = new ActionRowBuilder();
+        const disabledButtons = new ActionRowBuilder();
 
         const skipButton = new ButtonBuilder()
         .setCustomId('skip-button')
         .setStyle(ButtonStyle.Secondary)
         .setEmoji('1198248590087307385');
 
+        const disabledSkipButton = new ButtonBuilder()
+        .setCustomId('skip-button')
+        .setStyle(ButtonStyle.Secondary)
+        .setEmoji('1198248590087307385')
+        .setDisabled(true);
+
         const rewindButton = new ButtonBuilder()
         .setCustomId('rewind-button')
         .setStyle(ButtonStyle.Secondary)
+        .setEmoji('1198248587369386134');
+
+        const disabledRewindButton = new ButtonBuilder()
+        .setCustomId('rewind-button')
+        .setStyle(ButtonStyle.Secondary)
         .setEmoji('1198248587369386134')
+        .setDisabled(true);
 
         const pauseButton = new ButtonBuilder()
         .setCustomId('pause-button')
         .setStyle(ButtonStyle.Danger)
         .setEmoji('1198248585624571904');
+
+        const disabledPauseButton = new ButtonBuilder()
+        .setCustomId('pause-button')
+        .setStyle(ButtonStyle.Danger)
+        .setEmoji('1198248585624571904')
+        .setDisabled(true);
 
         const resumeButton = new ButtonBuilder()
         .setCustomId('resume-button')
@@ -61,13 +81,26 @@ module.exports = {
         .setStyle(ButtonStyle.Primary)
         .setEmoji('1198248581304418396');
 
-        const seekButton = new ButtonBuilder()
+        const disabledLoopButton = new ButtonBuilder()
+        .setCustomId('loop-button')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji('1198248581304418396')
+        .setDisabled(true);
+
+        const shuffleButton = new ButtonBuilder()
         .setCustomId('shuffle-button')
         .setStyle(ButtonStyle.Primary)
         .setEmoji('1198248578146115605')
 
-        playingRow.addComponents([rewindButton, skipButton, pauseButton, loopButton, seekButton]);
-        pausedRow.addComponents([rewindButton, skipButton, resumeButton, loopButton, seekButton]);
+        const disabledshuffleButton = new ButtonBuilder()
+        .setCustomId('shuffle-button')
+        .setStyle(ButtonStyle.Primary)
+        .setEmoji('1198248578146115605')
+        .setDisabled(true);
+        
+        playingRow.addComponents([rewindButton, skipButton, pauseButton, loopButton, shuffleButton]);
+        pausedRow.addComponents([rewindButton, skipButton, resumeButton, loopButton, shuffleButton]);
+        disabledButtons.addComponents([disabledRewindButton, disabledSkipButton, disabledPauseButton, disabledLoopButton, disabledshuffleButton]);
 
         const url = interaction.options.getString('url');
         const song = interaction.options.getString('name');
@@ -134,6 +167,7 @@ module.exports = {
                 .setTitle("No search results found for the song")
                 .setTimestamp();
                 
+                console.log("No search results found for the song by URL");
                 await interaction.editReply({ embeds: [embed] });
                 return;
             }
@@ -144,6 +178,7 @@ module.exports = {
                 .setTitle("You can't play live content")
                 .setTimestamp()
 
+                console.log("You can't play live content");
                 await interaction.editReply({ embeds: [embed] });
                 return;
             }
@@ -164,13 +199,14 @@ module.exports = {
 
                     globals.queue.push(newSong);
                 }));
-
+                
                 const embed = new EmbedBuilder()
-                    .setColor(0x00ff00)
-                    .setAuthor({ name: 'Songs added to queue:' })
-                    .addFields(fields)
-                    .setTimestamp()
-
+                .setColor(0x00ff00)
+                .setAuthor({ name: 'Songs added to queue:' })
+                .addFields(fields)
+                .setTimestamp()
+                
+                console.log("Adding playlist to song queue by URL");
                 interaction.editReply({ embeds: [embed] });
             }
             else 
@@ -192,6 +228,7 @@ module.exports = {
                 .setImage(newSong.image)
                 .setTimestamp()
     
+                console.log("Adding song to song queue by URL");
                 interaction.editReply({ embeds: [embed] });
             }        
         }
@@ -216,6 +253,7 @@ module.exports = {
                     .setTitle("No search results found for the song")
                     .setTimestamp();
                     
+                    console.log("No search results found for the song by name");
                     await interaction.editReply({ embeds: [embed] });
                     return;
                 }
@@ -227,6 +265,7 @@ module.exports = {
                     .setTitle("You can't play live content")
                     .setTimestamp()
     
+                    console.log("You can't play live content");
                     await interaction.editReply({ embeds: [embed] });
                     return;
                 }
@@ -248,7 +287,8 @@ module.exports = {
                     .setURL(newSong.url)
                     .setImage(newSong.image)
                     .setTimestamp()
-        
+
+                    console.log("Adding song to song queue by name");
                     if(voiceCom)
                     {
                         await globals.commandChannel.send({ embeds: [embed] });
@@ -363,14 +403,20 @@ module.exports = {
     
                     const ytdlp_path =path.resolve(__dirname, "yt-dlp.exe"); 
                     const command = `${ytdlp_path} -x --audio-format vorbis -o ${path.resolve(__dirname, "output")} ${globals.queue[0].url}`;
+                    console.log("Age restricted song processing");
                     await executeCommand(command);
+                    console.log("Age restricted song processed");
                 }
                 else
                 { 
+                    console.log("Downloading audio");
                     const stream = ytdl(globals.queue[0].url, { filter: 'audioonly', quality: 'highestaudio' });
                     const writer = stream.pipe(fs.createWriteStream(outputFilePath));
                 
-                    writer.on('finish', () => play())
+                    writer.on('finish', () => { 
+                        console.log("Audio downloaded successfully");
+                        play();
+                    })
                 }
 
                 async function play()  {
@@ -378,6 +424,7 @@ module.exports = {
                 
                     if(eq)
                     {
+                        console.log("Applying EQ effect: " + eq);
                         switch(eq)
                         {
                             case 'bassboost':
@@ -419,9 +466,8 @@ module.exports = {
                             default:
                                 break;
                         }
+                        console.log("EQ effect applied");
                     }
-
-
 
                     const resource = createAudioResource(outputFilePath, { inputType: StreamType.OggOpus, inlineVolume: true });
                     resource.volume.setVolume(0.05);
@@ -438,7 +484,7 @@ module.exports = {
                     
                     if (globals.nowPlayingMessage) 
                     {
-                        console.log("test 1");
+                        console.log("Now playing message exists, updating it");
                         interaction.channel.messages.fetch(globals.nowPlayingMessage)
                             .then(message => {
                                 if (message) message.delete().catch(console.error);
@@ -479,7 +525,7 @@ module.exports = {
                     {
                         if (globals.player.AudioPlayerStatus === AudioPlayerStatus.Paused) 
                         {
-                            console.log("test 2");
+                            console.log("Sending paused message");
                             interaction.channel.send({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' })
                                 .then(nowPlayingMessage => {
                                     globals.nowPlayingMessage = nowPlayingMessage.id;
@@ -487,7 +533,7 @@ module.exports = {
                         } 
                         else 
                         {
-                            console.log("test 3");
+                            console.log("Sending playing message");
                             interaction.channel.send({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' })
                                 .then(nowPlayingMessage => {
                                     globals.nowPlayingMessage = nowPlayingMessage.id;
@@ -496,7 +542,7 @@ module.exports = {
                     }
                     
 
-                    const filter = i => i.user.id === interaction.user.id;
+                    const filter = () => true;
                     try
                     {
                         const time = globals.queue[0].length * 1000 + 2000;
@@ -507,12 +553,15 @@ module.exports = {
                             {
                                 if(globals.playedSongs.length === 0)
                                 {
+                                    console.log("Rewind button clicked. No previous songs in queue, rewinding to the beginning of the song");
                                     globals.queue.unshift(globals.queue[0])
                                     collector.stop();
                                     globals.player.stop();
+                                    await confirmation.update({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
                                     return;
                                 }
                             
+                                console.log("Rewind button clicked. Rewinding to the previous song");
                                 globals.playEarlier = true;
                                 
                                 globals.player.stop();
@@ -521,17 +570,19 @@ module.exports = {
                                 nowPlayingEmbed.setFields(nowPlayingEmbedFields);
                                 collector.stop();
 
-                                await confirmation.update({ embeds: [nowPlayingEmbed], position: 'end' });
+                                await confirmation.update({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
                             }
                             else if(confirmation.customId === "skip-button")
                             {
+                                console.log("Skip button clicked. Skipping the song");
                                 collector.stop();
                                 globals.player.stop();
 
-                                await confirmation.update({ embeds: [nowPlayingEmbed], position: 'end' });
+                                await confirmation.update({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
                             }
                             else if(confirmation.customId === "pause-button")
                             {
+                                console.log("Pause button clicked. Pausing the song");
                                 globals.player.pause();
 
                                 nowPlayingEmbedFields[1].value = 'Paused';
@@ -541,6 +592,7 @@ module.exports = {
                             }
                             else if(confirmation.customId === "resume-button")
                             {
+                                console.log("resume button clicked. Resuming the song");
                                 globals.player.unpause();
 
                                 nowPlayingEmbedFields[1].value = 'Playing';
@@ -550,6 +602,7 @@ module.exports = {
                             }
                             else if(confirmation.customId === "loop-button")
                             {
+                                console.log("Loop button clicked. Changing loop type");
                                 if(globals.loop === globals.LoopType.NO_LOOP)
                                 {
                                     globals.loop = globals.LoopType.LOOP_SONG;
@@ -571,6 +624,7 @@ module.exports = {
                             }
                             else if(confirmation.customId === "shuffle-button")
                             {
+                                console.log("Shuffle button clicked. Toggling shuffle");
                                 globals.shuffle = !globals.shuffle;
 
                                 if(globals.shuffle)
@@ -592,8 +646,7 @@ module.exports = {
                     }
                     catch(err)
                     {
-                        console.error("JEBANE INTERAKCJE NA PRZYCISKACH");
-                        console.error(err);
+                        console.error("Interaction collector error: " + err);
                     }
                 };
             }
@@ -601,7 +654,9 @@ module.exports = {
             globals.player.on('idle', () => {
                 if(globals.schedulerPlaying)
                 {
+                    console.log("Scheduler playing");
                     globals.schedulerPlaying = false;
+                    clearTimeout(globals.timeout);
                     playNextSong(); 
                     return;
                 }
@@ -613,12 +668,14 @@ module.exports = {
     
                     if(globals.playEarlier)
                     {
+                        console.log("Playing earlier song");
                         globals.playEarlier = false;
                         globals.queue.unshift(globals.playedSongs[0])
                         globals.playedSongs.shift();
                     }
                     else
                     {
+                        console.log("Loop type: " + globals.loop);
                         switch(globals.loop)
                         {
                             case globals.LoopType.LOOP_QUEUE:
@@ -646,6 +703,7 @@ module.exports = {
 
                     if (globals.queue.length === 0) 
                     {
+                        console.log("Queue empty, disconnecting, clearing variables and deleting messages");
                         interaction.channel.messages
                             .fetch(globals.nowPlayingMessage)
                             .then((message) => {
@@ -675,7 +733,7 @@ module.exports = {
                                 console.error('Error fetching messages:', error);
                             });
                         
-                        setTimeout(() => {
+                        globals.timeout = setTimeout(() => {
                             connection.disconnect();
                             globals.player = null;
                             globals.resource = null;
@@ -693,19 +751,31 @@ module.exports = {
                     }
                     else if(globals.playEarlier)
                     {
+                        console.log("Playing earlier song");
+                        clearTimeout(globals.timeout);
                         globals.playEarlier = false;
                         playNextSong();
                     }
                     else
                     {
+                        console.log("Playing next song");
+                        clearTimeout(globals.timeout);
                         playNextSong(); 
                     }
                     
                 }
             });
             
-            if(globals.player.state.status === AudioPlayerStatus.Playing) return;
-            else playNextSong();
+            if(globals.player.state.status === AudioPlayerStatus.Playing)
+            {
+                console.log("Player is playing");
+                return;    
+            }
+            else 
+            {
+                console.log("Playing first song"); 
+                playNextSong();
+            }
         }
     }    
 }
