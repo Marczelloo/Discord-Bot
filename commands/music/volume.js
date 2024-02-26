@@ -80,9 +80,8 @@ module.exports = {
                 }
 
             }
-
             module.exports = changeVolume;
 
-            changeVolume(volume, false)        
+            changeVolume(volume / 100, false)        
         }
 }
