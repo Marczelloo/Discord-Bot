@@ -1,0 +1,10 @@
+{
+	"token": "your_discord_token",
+	"clientId": "your_client_id",
+	"guildId": "yout_guild_id", //optional
+	"db_user": "root",
+	"db_pass": "",
+	"db_host": "localhost",
+	"db_port": "3306",
+	"db_name": "nigusfigus"
+}
