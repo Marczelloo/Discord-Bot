@@ -14,6 +14,7 @@ const globals  = require('../../global.js');
 const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require('./eqFunctions.js');
 const { setTimeout } = require('timers');
 const { skip } = require('node:test');
+const { clear } = require('console');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -401,7 +402,7 @@ module.exports = {
                         }
                     }
     
-                    const ytdlp_path =path.resolve(__dirname, "yt-dlp.exe"); 
+                    const ytdlp_path =path.resolve(__dirname, "yt-dlp-lin"); 
                     const command = `${ytdlp_path} -x --audio-format vorbis -o ${path.resolve(__dirname, "output")} ${globals.queue[0].url}`;
                     console.log("Age restricted song processing");
                     await executeCommand(command);
@@ -657,6 +658,7 @@ module.exports = {
                     console.log("Scheduler playing");
                     globals.schedulerPlaying = false;
                     clearTimeout(globals.timeout);
+                    console.log("Timeout for clearing variables and disconnecting stopped");
                     playNextSong(); 
                     return;
                 }
@@ -671,6 +673,8 @@ module.exports = {
                         console.log("Playing earlier song");
                         globals.playEarlier = false;
                         globals.queue.unshift(globals.playedSongs[0])
+                        clearTimeout(globals.timeout);
+                        console.log("Timeout for clearing variables and disconnecting stopped");
                         globals.playedSongs.shift();
                     }
                     else
@@ -699,6 +703,8 @@ module.exports = {
     
                                 break;
                         }
+                        clearTimeout(globals.timeout);
+                        console.log("Timeout for clearing variables and disconnecting stopped");
                     }
 
                     if (globals.queue.length === 0) 
@@ -734,25 +740,30 @@ module.exports = {
                             });
                         
                         globals.timeout = setTimeout(() => {
-                            connection.disconnect();
-                            globals.player = null;
-                            globals.resource = null;
-                            globals.queue = [];
-                            globals.playedSongs = [];
-                            globals.firstCommandTimestamp = null;
-                            globals.nowPlayingMessage = null;
-                            globals.eqEffect = null;
-                            globals.loop = globals.LoopType.NO_LOOP;
-                            globals.shuffle = false;
-                            globals.isSkipped = false;
-                            globals.schedulerPlaying = false;
-
+                            console.log("End of timeout");
+                            if(globals.queue.length === 0 && globals.player.state.status === AudioPlayerStatus.Idle)
+                            {
+                                console.log("Disconnecting from voice channel after timeout");
+                                connection.disconnect();
+                                globals.player = null;
+                                globals.resource = null;
+                                globals.queue = [];
+                                globals.playedSongs = [];
+                                globals.firstCommandTimestamp = null;
+                                globals.nowPlayingMessage = null;
+                                globals.eqEffect = null;
+                                globals.loop = globals.LoopType.NO_LOOP;
+                                globals.shuffle = false;
+                                globals.isSkipped = false;
+                                globals.schedulerPlaying = false;
+                            }
                         }, 300000)
                     }
                     else if(globals.playEarlier)
                     {
                         console.log("Playing earlier song");
                         clearTimeout(globals.timeout);
+                        console.log("Timeout for clearing variables and disconnecting stopped");
                         globals.playEarlier = false;
                         playNextSong();
                     }
@@ -760,6 +771,7 @@ module.exports = {
                     {
                         console.log("Playing next song");
                         clearTimeout(globals.timeout);
+                        console.log("Timeout for clearing variables and disconnecting stopped");
                         playNextSong(); 
                     }
                     
@@ -774,6 +786,8 @@ module.exports = {
             else 
             {
                 console.log("Playing first song"); 
+                clearTimeout(globals.timeout);
+                console.log("Timeout for clearing variables and disconnecting stopped");
                 playNextSong();
             }
         }
