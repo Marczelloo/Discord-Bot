@@ -13,7 +13,7 @@ const globals  = require('../../global.js');
 
 const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require('./eqFunctions.js');
 const { setTimeout } = require('timers');
-const { skip } = require('node:test');
+const { clear } = require('console');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -144,22 +144,16 @@ module.exports = {
 
             if(songInfo.nsfw)
                 globals.ageRestricted = true;
-            
             else
                 globals.ageRestricted = false;
             
             const youtubePlaylistPattern = /^https?:\/\/(www\.)?youtube\.com\/playlist\?list=[a-zA-Z0-9_-]+$/;
     
             if (youtubePlaylistPattern.test(url)) 
-            {
                 playlist = true;
-            }
             else
-            {
                 playlist = false;
-            }
-
-
+         
             if(songInfo === null || songInfo === undefined)
             {
                 const embed = new EmbedBuilder()
@@ -190,6 +184,8 @@ module.exports = {
 
                     const newSong = {
                         title: video.title,
+                        artist: songInfo.channel.name,
+                        artist_url: songInfo.channel.icon.url,
                         url: url.items[0].url, 
                         image: url.bestThumbnail.url,
                         length: video.length_seconds
@@ -213,6 +209,8 @@ module.exports = {
             {
                 const newSong = {
                     title: songInfo.title,
+                    artist: songInfo.channel.name,
+                    artist_url: songInfo.channel.icon.url,
                     url: url,
                     image: songInfo.thumbnail.url,
                     length: songInfo.durationFormatted,
@@ -226,6 +224,7 @@ module.exports = {
                 .setTitle(newSong.title)
                 .setURL(newSong.url)
                 .setImage(newSong.image)
+                .setFooter({ text: "Author: " + newSong.artist, iconURL: newSong.artist_url })
                 .setTimestamp()
     
                 console.log("Adding song to song queue by URL");
@@ -273,6 +272,8 @@ module.exports = {
                 {
                     const newSong = {
                         title: video.title,
+                        artist: video.author.name,
+                        artist_url: video.author.bestAvatar.url,
                         url: video.url,
                         image: video.bestThumbnail.url,
                         length: video.duration,
@@ -286,6 +287,7 @@ module.exports = {
                     .setTitle(newSong.title)
                     .setURL(newSong.url)
                     .setImage(newSong.image)
+                    .setFooter({ text: "Author: " + newSong.artist, iconURL: newSong.artist_url })
                     .setTimestamp()
 
                     console.log("Adding song to song queue by name");
@@ -370,6 +372,7 @@ module.exports = {
                 .setTitle(globals.queue[0].title)
                 .setURL(globals.queue[0].url)
                 .setImage(globals.queue[0].image)
+                .setFooter({ text: "Author: " + globals.queue[0].artist, iconURL: globals.queue[0].artist_url })
                 .setTimestamp()
                 
                 outputFilePath = path.resolve(__dirname, 'output.ogg');  
@@ -545,8 +548,7 @@ module.exports = {
                     const filter = () => true;
                     try
                     {
-                        const time = globals.queue[0].length * 1000 + 2000;
-                        const collector = interaction.channel.createMessageComponentCollector({ filter, time: time });
+                        const collector = globals.commandChannel.createMessageComponentCollector({ filter, time: null });
 
                         collector.on('collect', async(confirmation) => {
                             if(confirmation.customId === 'rewind-button')
@@ -602,6 +604,16 @@ module.exports = {
                             }
                             else if(confirmation.customId === "loop-button")
                             {
+                                if(globals.autoplay)
+                                {
+                                    const embed = new EmbedBuilder()
+                                    .setColor(0xff0000)
+                                    .setTitle("You can't toggle loop while autoplay is active!")
+                                    .setTimestamp()
+    
+                                    await confirmation.channel.send({ embeds: [embed] });
+                                    return;
+                                }
                                 console.log("Loop button clicked. Changing loop type");
                                 if(globals.loop === globals.LoopType.NO_LOOP)
                                 {
@@ -651,7 +663,7 @@ module.exports = {
                 };
             }
         
-            globals.player.on('idle', () => {
+            globals.player.on('idle', async () => {
                 if(globals.schedulerPlaying)
                 {
                     console.log("Scheduler playing");
@@ -659,6 +671,20 @@ module.exports = {
                     clearTimeout(globals.timeout);
                     playNextSong(); 
                     return;
+                }
+
+                if(globals.autoplay)
+                {
+                    console.log("Autoplay enabled, searching for next song");
+
+                    try
+                    {
+                        
+                    }
+                    catch(err)
+                    {
+                        console.error("Autoplay error: " + err);
+                    }
                 }
 
                 if(!globals.isSkipped)
@@ -704,16 +730,14 @@ module.exports = {
                     if (globals.queue.length === 0) 
                     {
                         console.log("Queue empty, disconnecting, clearing variables and deleting messages");
-                        interaction.channel.messages
+                        globals.commandChannel.messages
                             .fetch(globals.nowPlayingMessage)
                             .then((message) => {
                                 if (message) message.delete().catch(console.error);
                             })
                             .catch(console.error);
 
-                        const channel = interaction.channel;
-
-                        channel.messages
+                        globals.commandChannel.messages
                             .fetch({ limit: 100 })
                             .then((messages) => {
                                 const botMessages = messages.filter(
@@ -734,6 +758,7 @@ module.exports = {
                             });
                         
                         globals.timeout = setTimeout(() => {
+                            console.log("Timeout, disconnecting");
                             connection.disconnect();
                             globals.player = null;
                             globals.resource = null;
@@ -774,6 +799,7 @@ module.exports = {
             else 
             {
                 console.log("Playing first song"); 
+                clearTimeout(globals.timeout);
                 playNextSong();
             }
         }
