@@ -5,4 +5,5 @@ config.json
 .eslintrc.json
 .env
 commands/music/schedulers.json
+.ogg
 # END: abpxx6d04wxr
