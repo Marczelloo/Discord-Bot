@@ -48,13 +48,17 @@ module.exports = {
         const musicField = { name: 'Music: ',
             value: "• **Play** - Plays songs by its name or url \n"
             + "• **Queue** - Show songs in the queue \n"
+            + "• **ClearQueue** - Clears the queue \n"
             + "• **Pause** - Pauses current song \n"
             + "• **Resume** - Resumes current song \n"
             + "• **Loop** - Loops current song or queue \n"
             + "• **Skip** - Skips current song, number of songs or specific song from queue \n"
             + "• **Volume** - Changes the volume of player (default - 5)\n"
-            + "• **Seek** - Sets the given timestamp of current song \n"
             + "• **Equalizer** - Changes the equalizer settings to selected preset \n" 
+            + "• **Autoplay** - Toggles autoplay for the current queue \n"
+            + "• **Schedulers** - Playe scheduled songs on specific hours \n"
+            + "• **Schedulers-Check** - Checks if schedulers are on/off \n"
+            + "• **Stop** - Stops the player and clears the queue \n"
         }
 
         const moderationField = { name: 'Moderation: ',

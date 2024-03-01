@@ -4,5 +4,8 @@ node_modules
 config.json
 .eslintrc.json
 .env
+.ogg
+commands/music/output.ogg
+commands/music/eqOutput.ogg
 commands/music/schedulers.json
 # END: abpxx6d04wxr
