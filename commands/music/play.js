@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { createAudioPlayer, createAudioResource, joinVoiceChannel, StreamType, AudioPlayerStatus } = require('@discordjs/voice');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { spotify_clientID, spotify_clientSecret } = require('../../config.json');
 
 const YouTube = require('youtube-sr').default;
 const ytdl = require('ytdl-core');
@@ -13,26 +14,33 @@ const globals  = require('../../global.js');
 
 const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require('./eqFunctions.js');
 const { setTimeout } = require('timers');
-const { skip } = require('node:test');
-const { clear } = require('console');
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('play')
         .setDescription('Play song from YouTube')
         .addStringOption(option => option
-            .setName('name')
-            .setDescription('Song name')
-            .setRequired(false)
-        )
-        .addStringOption(option => option
-            .setName('url')
-            .setDescription('YouTube URL')
-            .setRequired(false)
+            .setName('query')
+            .setDescription('Song name, YouTube URL or Spotify URL')
+            .setRequired(true)
         ),
+        // .addStringOption(option => option
+        //     .setName('name')
+        //     .setDescription('Song name')
+        //     .setRequired(true)
+        // )
+        // .addStringOption(option => option
+        //     .setName('url')
+        //     .setDescription('YouTube or Spotify URL')
+        //     .setRequired(true)
+        // ),
 
     async execute(interaction) 
     {
+        if(globals.firstCommandTimestamp == null)
+        {
+            globals.firstCommandTimestamp = Date.now();
+        }
         await interaction.deferReply();
 
         const playingRow = new ActionRowBuilder();
@@ -103,8 +111,22 @@ module.exports = {
         pausedRow.addComponents([rewindButton, skipButton, resumeButton, loopButton, shuffleButton]);
         disabledButtons.addComponents([disabledRewindButton, disabledSkipButton, disabledPauseButton, disabledLoopButton, disabledshuffleButton]);
 
-        const url = interaction.options.getString('url');
-        const song = interaction.options.getString('name');
+        const query = interaction.options.getString('query');
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+
+        let song, url;
+
+        if(urlPattern.test(query))
+        {
+            url = query;
+        }
+        else
+        {
+            song = query;
+        }
+        
+        // const url = interaction.options.getString('url');
+        // const song = interaction.options.getString('name');
 
         const voiceChannel = interaction.member.voice.channel;
 
@@ -131,110 +153,273 @@ module.exports = {
         globals.commandChannel = interaction.channel;
 
         if (url) {
+            const isSpotifyUrl = url.includes('spotify');
+            const isYoutubeUrl = url.includes('youtube');
 
             let songInfo;
             let playlist;
 
-           //songInfo = await ytdl.getInfo(url); 
+            if (isSpotifyUrl) 
+            {
+                const spotifyPlaylistPattern = /^https?:\/\/(open\.)?spotify\.com\/playlist\/[a-zA-Z0-9]+\?/;
+                console.log(spotifyPlaylistPattern.test(url));
 
-            await YouTube.getVideo(url)
-            .then(video => {
-                songInfo = video;
-            })
-            .catch(console.error);
+                if (spotifyPlaylistPattern.test(url)) 
+                    playlist = true;
+                else
+                    playlist = false;
 
-            if(songInfo.nsfw)
-                globals.ageRestricted = true;
-            
-            else
-                globals.ageRestricted = false;
-            
-            const youtubePlaylistPattern = /^https?:\/\/(www\.)?youtube\.com\/playlist\?list=[a-zA-Z0-9_-]+$/;
+                if(globals.spotify_token_expires < Date.now() || globals.spotify_token === null)
+                {
+                    try
+                    { 
+                        const reposne = await fetch('https://accounts.spotify.com/api/token', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                            },
+                            body: new URLSearchParams({
+                                grant_type: 'client_credentials',
+                                client_id: spotify_clientID,
+                                client_secret: spotify_clientSecret
+                            }),
+                        });
+
+                        const data = await reposne.json();
+                        if(data.error)
+                        {
+                            console.error("Error obtaining spotify token: " + data.error);
+                            const embed = new EmbedBuilder()
+                            .setColor(0xff0000)
+                            .setTitle("Error obtaining spotify token, please define spotify_clientID and spotify_clientSecret in config.json")
+                            .setTimestamp()
+
+                            await interaction.editReply({ embeds: [embed] });
+                            return;
+                        }
+                        globals.spotify_token = data.access_token;
+                        globals.spotify_token_expires = Date.now() + (data.expires_in * 1000);
+                    }
+                    catch(err)
+                    {
+                        console.error("Error obtaining spotify token: " + err);
+                        const embed = new EmbedBuilder()
+                        .setColor(0xff0000)
+                        .setTitle("Error obtaining spotify token, please define spotify_clientID and spotify_clientSecret in config.json or try again later")
+                        .setTimestamp()
+
+                        await interaction.editReply({ embeds: [embed] });
+                        return;
+                    }
+                }
+
+                if(playlist)
+                { 
+                    const playlistId = url.split('/').pop();
+                    console.log(playlistId);
+                    const apiUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
+
+                    try 
+                    {
+                        const response = await fetch(apiUrl, {
+                            headers: {
+                                'Authorization': `Bearer ${globals.spotify_token}`
+                            }
+                        });
+
+                        const data = await response.json();
+                        const tracks = data.tracks.items;
+
+                        globals.ageRestricted = false;
+
+                        await Promise.all(tracks.map(async track => {
+                            const time = track.track.duration_ms / 1000;
+                            const formatedTime = time.toString().includes(":") ? time : new Date(time * 1000).toISOString().substr(time < 3600 ? 14 : 11, 5);
+                            
+                            const newSong = {
+                                title: track.track.name,
+                                artist: track.track.artists[0].name,
+                                artist_url: track.track.artists[0].external_urls.spotify,
+                                url: track.track.external_urls.spotify,
+                                image: track.track.album.images[0].url,
+                                length: formatedTime,
+                            };
+
+                            console.log(newSong);
+
+                            globals.queue.push(newSong);
+                        }));
+                        
+                        const embed = new EmbedBuilder()
+                        .setColor(0x00ff00)
+                        .setTitle('Song are proccessing they will be added in a while')
+                        .setTimestamp()
+                        
+                        console.log("Adding playlist to song queue by spotify URL");
+
+                        await interaction.editReply({ embeds: [embed] });
+                    } 
+                    catch (error) 
+                    {
+                        console.error("Error retrieving Spotify playlist tracks:", error);
+                        const embed = new EmbedBuilder()
+                            .setColor(0xff0000)
+                            .setTitle("Error retrieving Spotify playlist tracks")
+                            .setTimestamp();
+
+                        await interaction.editReply({ embeds: [embed] });
+                        return;
+                    }       
+                }
+                else
+                {
+                    console.log("Spotify song processing");
+                }
+            } 
+            else if(isYoutubeUrl) 
+            {
+                const youtubePlaylistPattern = url.includes('list');
+
+                if (youtubePlaylistPattern) 
+                    playlist = true;
+                else
+                    playlist = false;
+
+                console.log(playlist);
+
+                if(playlist)
+                {
+                    const regex = /list=([a-zA-Z0-9_-]+)/;
+                    const match = url.match(regex);
+                    if (match) 
+                    {
+                        try
+                        {
+                            const playlistId = match[1];
+                            console.log(`Playlist ID: ${playlistId}`);
     
-            if (youtubePlaylistPattern.test(url)) 
-            {
-                playlist = true;
-            }
-            else
-            {
-                playlist = false;
-            }
+                            const playlist = await YouTube.getPlaylist(playlistId);
+                            const videos = await new Promise((resolve, reject) => {
+                                playlist.fetch()
+                                    .then(videos => resolve(videos))
+                                    .catch(error => reject(error));
+                            });
+    
+                            const videosArray = Array.from(videos);
+    
+                            globals.ageRestricted = false;
+    
+                            await Promise.all(videosArray.map(video => {
+                                const newSong = {
+                                    title: video.title,
+                                    artist: video.channel.name,
+                                    artist_url: video.channel.icon.url,
+                                    url: video.url,
+                                    image: video.thumbnail.url,
+                                    length: video.durationFormatted,
+                                };
+    
+                                globals.queue.push(newSong);
+                            }));
+    
+                            const embed = new EmbedBuilder()
+                            .setColor(0x00ff00)
+                            .setTitle('Playlist added to queue')
+                            .setTimestamp()
+    
+                            console.log("Adding playlist to song queue by URL");
 
+                            await interaction.editReply({ embeds: [embed] });
+                        }
+                        catch(err)
+                        {
+                            console.error("Error adding playlist to queue: " + err);
+                            const embed = new EmbedBuilder()
+                            .setColor(0xff0000)
+                            .setTitle("Error adding playlist to queue, if the playlist is private, age restricted or your mix, the bot can't add it to the queue")
+                            .setTimestamp();
 
-            if(songInfo === null || songInfo === undefined)
-            {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("No search results found for the song")
-                .setTimestamp();
-                
-                console.log("No search results found for the song by URL");
-                await interaction.editReply({ embeds: [embed] });
-                return;
-            }
-            else if(songInfo.live)
-            {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("You can't play live content")
-                .setTimestamp()
+                            await interaction.editReply({ embeds: [embed] });
+                        }
+                    } 
+                    else 
+                    {
+                        console.log('No playlist ID found in the URL');
+                    }
+                }
+                else
+                {
+                    songInfo = await YouTube.getVideo(url);
+                    
+                    if(songInfo.nsfw)
+                        globals.ageRestricted = true;
+                    else
+                        globals.ageRestricted = false;
+                    
+                    if(songInfo === null || songInfo === undefined)
+                    {
+                        const embed = new EmbedBuilder()
+                        .setColor(0xff0000)
+                        .setTitle("No search results found for the song")
+                        .setTimestamp();
+                        
+                        console.log("No search results found for the song by URL");
+                        await interaction.editReply({ embeds: [embed] });
+                        return;
+                    }
+                    else if(songInfo.live)
+                    {
+                        const embed = new EmbedBuilder()
+                        .setColor(0xff0000)
+                        .setTitle("You can't play live content")
+                        .setTimestamp()
+        
+                        console.log("You can't play live content");
+                        await interaction.editReply({ embeds: [embed] });
+                        return;
+                    }
+                    else 
+                    {
+                        const newSong = {
+                            title: songInfo.title,
+                            artist: songInfo.channel.name,
+                            artist_url: songInfo.channel.icon.url,
+                            url: url,
+                            image: songInfo.thumbnail.url,
+                            length: songInfo.durationFormatted,
+                        };
+                        
+                        globals.queue.push(newSong);
+                        
+                        const embed = new EmbedBuilder()
+                        .setColor(0x00ff00)
+                        .setAuthor({ name: 'Song added to queue:' })
+                        .setTitle(newSong.title)
+                        .setURL(newSong.url)
+                        .setImage(newSong.image)
+                        .setFooter({ text: "Author: " + newSong.artist, iconURL: newSong.artist_url })
+                        .setTimestamp()
+            
+                        console.log("Adding song to song queue by URL");
 
-                console.log("You can't play live content");
-                await interaction.editReply({ embeds: [embed] });
-                return;
-            }
-            else if(playlist) 
-            {
-                let fields = [];
-                await Promise.all(songInfo.related_videos.reverse().map(async (video) => {
-                    const url = await ytsr(video.title, { limit: 1 });
-
-                    const newSong = {
-                        title: video.title,
-                        url: url.items[0].url, 
-                        image: url.bestThumbnail.url,
-                        length: video.length_seconds
-                    };
-
-                    fields.push({ name: newSong.title, value: `${url.items[0].url}` });
-
-                    globals.queue.push(newSong);
-                }));
-                
-                const embed = new EmbedBuilder()
-                .setColor(0x00ff00)
-                .setAuthor({ name: 'Songs added to queue:' })
-                .addFields(fields)
-                .setTimestamp()
-                
-                console.log("Adding playlist to song queue by URL");
-                interaction.editReply({ embeds: [embed] });
-            }
+                        await interaction.editReply({ embeds: [embed] });
+                    }       
+                }
+            } 
             else 
             {
-                const newSong = {
-                    title: songInfo.title,
-                    url: url,
-                    image: songInfo.thumbnail.url,
-                    length: songInfo.durationFormatted,
-                };
-                   
-                globals.queue.push(newSong);
-                
                 const embed = new EmbedBuilder()
-                .setColor(0x00ff00)
-                .setAuthor({ name: 'Song added to queue:' })
-                .setTitle(newSong.title)
-                .setURL(newSong.url)
-                .setImage(newSong.image)
-                .setTimestamp()
-    
-                console.log("Adding song to song queue by URL");
-                interaction.editReply({ embeds: [embed] });
-            }        
+                    .setColor(0xff0000)
+                    .setTitle("Invalid URL")
+                    .setTimestamp();
+
+                await interaction.editReply({ embeds: [embed] });
+                return;
+            }            
         }
 
-        if (song) {
+        if (song) 
+        {
             const findSongByName = async (song, voiceCom) => {
                 const searchResults = await ytsr(song, { limit: 1 });
                 const video = searchResults.items[0];
@@ -274,6 +459,8 @@ module.exports = {
                 {
                     const newSong = {
                         title: video.title,
+                        artist: video.author.name,
+                        artist_url: video.author.bestAvatar.url,
                         url: video.url,
                         image: video.bestThumbnail.url,
                         length: video.duration,
@@ -287,9 +474,11 @@ module.exports = {
                     .setTitle(newSong.title)
                     .setURL(newSong.url)
                     .setImage(newSong.image)
+                    .setFooter({ text: "Author: " + newSong.artist, iconURL: newSong.artist_url })
                     .setTimestamp()
 
                     console.log("Adding song to song queue by name");
+
                     if(voiceCom)
                     {
                         await globals.commandChannel.send({ embeds: [embed] });
@@ -307,11 +496,6 @@ module.exports = {
         }
 
         globals.guildId = interaction.guild.id;
-
-        if(globals.firstCommandTimestamp === null)
-        {
-            globals.firstCommandTimestamp = Date.now();
-        }
 
         if (globals.queue.length >= 1) {
             const connection = joinVoiceChannel({
@@ -371,9 +555,18 @@ module.exports = {
                 .setTitle(globals.queue[0].title)
                 .setURL(globals.queue[0].url)
                 .setImage(globals.queue[0].image)
+                .setFooter({ text: "Author: " + globals.queue[0].artist, iconURL: globals.queue[0].artist_url })
                 .setTimestamp()
                 
                 outputFilePath = path.resolve(__dirname, 'output.ogg');  
+
+                if(globals.queue[0].url.includes('spotify'))
+                {
+                    const video = await ytsr(globals.queue[0].title, { limit: 1 });
+                    const videoInfo = video.items[0];
+
+                    globals.queue[0].yt_url = videoInfo.url;
+                }
 
                 if(globals.ageRestricted)
                 {
@@ -411,7 +604,13 @@ module.exports = {
                 else
                 { 
                     console.log("Downloading audio");
-                    const stream = ytdl(globals.queue[0].url, { filter: 'audioonly', quality: 'highestaudio' });
+                    let stream;
+
+                    if(globals.queue[0].url.includes('spotify'))
+                        stream = ytdl(globals.queue[0].yt_url, { filter: 'audioonly', quality: 'highestaudio' });
+                    else
+                        stream = ytdl(globals.queue[0].url, { filter: 'audioonly', quality: 'highestaudio' });
+                    
                     const writer = stream.pipe(fs.createWriteStream(outputFilePath));
                 
                     writer.on('finish', () => { 
@@ -546,8 +745,7 @@ module.exports = {
                     const filter = () => true;
                     try
                     {
-                        const time = globals.queue[0].length * 1000 + 2000;
-                        const collector = interaction.channel.createMessageComponentCollector({ filter, time: time });
+                        const collector = globals.commandChannel.createMessageComponentCollector({ filter, time: null });
 
                         collector.on('collect', async(confirmation) => {
                             if(confirmation.customId === 'rewind-button')
@@ -603,6 +801,16 @@ module.exports = {
                             }
                             else if(confirmation.customId === "loop-button")
                             {
+                                if(globals.autoplay)
+                                {
+                                    const embed = new EmbedBuilder()
+                                    .setColor(0xff0000)
+                                    .setTitle("You can't toggle loop while autoplay is active!")
+                                    .setTimestamp()
+    
+                                    await confirmation.channel.send({ embeds: [embed] });
+                                    return;
+                                }
                                 console.log("Loop button clicked. Changing loop type");
                                 if(globals.loop === globals.LoopType.NO_LOOP)
                                 {
@@ -631,7 +839,9 @@ module.exports = {
                                 if(globals.shuffle)
                                 {
                                     globals.originalQueue = globals.queue;
+                                    const firstSong = globals.queue.shift();
                                     globals.queue = globals.queue.sort(() => Math.random() - 0.5);
+                                    globals.queue.unshift(firstSong);
                                 }
                                 else
                                 {
@@ -652,7 +862,7 @@ module.exports = {
                 };
             }
         
-            globals.player.on('idle', () => {
+            globals.player.on('idle', async () => {
                 if(globals.schedulerPlaying)
                 {
                     console.log("Scheduler playing");
@@ -661,6 +871,164 @@ module.exports = {
                     console.log("Timeout for clearing variables and disconnecting stopped");
                     playNextSong(); 
                     return;
+                }
+
+                if(globals.autoplay)
+                {
+                    console.log("Autoplay enabled, searching for next song");
+
+                    try
+                    {
+                        console.log("Trying to obtain spotify token");
+                        if(globals.spotify_token_expires < Date.now() || globals.spotify_token === null)
+                        {
+                            try
+                            { 
+                                const reposne = await fetch('https://accounts.spotify.com/api/token', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded',
+                                    },
+                                    body: new URLSearchParams({
+                                        grant_type: 'client_credentials',
+                                        client_id: spotify_clientID,
+                                        client_secret: spotify_clientSecret
+                                    }),
+                                });
+        
+                                const data = await reposne.json();
+                                if(data.error)
+                                {
+                                    console.error("Error obtaining spotify token: " + data.error);
+                                    const embed = new EmbedBuilder()
+                                    .setColor(0xff0000)
+                                    .setTitle("Error obtaining spotify token, please define spotify_clientID and spotify_clientSecret in config.json")
+                                    .setTimestamp()
+        
+                                    await interaction.send({ embeds: [embed] });
+                                    globals.autoplay = false;
+                                    return;
+                                }
+                                globals.spotify_token = data.access_token;
+                                globals.spotify_token_expires = Date.now() + (data.expires_in * 1000);
+                            }
+                            catch(err)
+                            {
+                                console.error("Error obtaining spotify token: " + err);
+                                const embed = new EmbedBuilder()
+                                .setColor(0xff0000)
+                                .setTitle("Error obtaining spotify token, please define spotify_clientID and spotify_clientSecret in config.json or try again later")
+                                .setTimestamp()
+
+                                await interaction.send({ embeds: [embed] });
+                                globals.autoplay = false;
+                                return;
+                            }
+                        }
+
+                        if(globals.spotify_token && globals.spotify_token_expires > Date.now())
+                        {
+                            let trackId;
+                            let artistId;
+                            try 
+                            {
+                                const response = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(globals.queue[0].title)}&type=track&limit=1`, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Authorization': 'Bearer ' + globals.spotify_token,
+                                        'Content-Type': 'application/json'
+                                    }
+                                });
+
+                                const data = await response.json();
+                                const track = data.tracks.items[0];
+                                trackId = track.id;
+                                artistId = track.artists[0].id;
+                            } 
+                            catch (err) 
+                            {
+                                console.error("Error getting track ID: " + err);
+                                trackId = null;
+                                const embed = new EmbedBuilder()
+                                .setColor(0xff0000)
+                                .setTitle("Error getting track ID")
+                                .setTimestamp()
+
+                                await globals.commandChannel.send({ embeds: [embed] });
+                                globals.autoplay = false;
+                                return;
+                            }
+
+                            if(trackId === null)
+                            {
+                                console.log("No track ID found");
+                                const embed = new EmbedBuilder()
+                                .setColor(0xff0000)
+                                .setTitle("No track ID found for the song")
+                                .setTimestamp()
+
+                                await globals.commandChannel.send({ embeds: [embed] });
+                                
+                                globals.autoplay = false;
+                                return;
+                            }
+
+                            try
+                            {
+                                console.log("Spotify token obtained");
+                                const response = await fetch(`https://api.spotify.com/v1/recommendations?seed_tracks=${encodeURIComponent(trackId)}&seed_artist=${encodeURIComponent(artistId)}&limit=1`, {
+                                    method: 'GET',
+                                    headers: {
+                                        'Authorization': 'Bearer ' + globals.spotify_token,
+                                        'Content-Type': 'application/json'
+                                    },
+
+                                });
+    
+                                const data = await response.json();
+                                console.log("Spotify song obtained");
+                                const song = data.tracks[0];
+                                const searchResults = await ytsr(song.name + " " + song.artists[0].name, { limit: 1 });
+                                const video = searchResults.items[0];
+                                const time = song.duration_ms / 1000;
+                                const formatedTime = time.toString().includes(":") ? time : new Date(time * 1000).toISOString().substr(time < 3600 ? 14 : 11, 5);
+                                const newSong = {
+                                    title: video.title,
+                                    artist: video.author.name,
+                                    artist_url: video.author.bestAvatar.url,
+                                    url: video.url,
+                                    image: video.bestThumbnail.url,
+                                    length: formatedTime
+                                };
+                                globals.queue.push(newSong);
+                                console.log("Autoplay song added to queue");
+                            }
+                            catch(err)
+                            {
+                                console.error("Error getting song from spotify: " + err);
+                                const embed = new EmbedBuilder()
+                                .setColor(0xff0000)
+                                .setTitle("Error getting song from spotify")
+                                .setTimestamp()
+
+                                await globals.commandChannel.send({ embeds: [embed] });
+                                globals.autoplay = false;
+                                return;
+                            }
+                        }
+                    }
+                    catch(err)
+                    {
+                        console.error("Autoplay error: " + err);
+                        const embed = new EmbedBuilder()
+                        .setColor(0xff0000)
+                        .setTitle("Error obtaining spotify token")
+                        .setTimestamp()
+
+                        await globals.commandChannel.send({ embeds: [embed] });
+                        globals.autoplay = false;
+                        return;
+                    }
                 }
 
                 if(!globals.isSkipped)
@@ -710,23 +1078,22 @@ module.exports = {
                     if (globals.queue.length === 0) 
                     {
                         console.log("Queue empty, disconnecting, clearing variables and deleting messages");
-                        interaction.channel.messages
+                        globals.commandChannel.messages
                             .fetch(globals.nowPlayingMessage)
                             .then((message) => {
                                 if (message) message.delete().catch(console.error);
                             })
                             .catch(console.error);
 
-                        const channel = interaction.channel;
-
-                        channel.messages
+                        globals.commandChannel.messages
                             .fetch({ limit: 100 })
-                            .then((messages) => {
-                                const botMessages = messages.filter(
+                            .then(async (messages) => {
+                                const botMessages = await  messages.filter(
                                     (message) =>
                                         message.author.bot && message.createdTimestamp > globals.firstCommandTimestamp
                                 );
-                                channel
+                                
+                                globals.commandChannel
                                 .bulkDelete(botMessages, true)
                                 .then(() => {
                                     console.log('Bot messages and replies deleted');
@@ -756,6 +1123,7 @@ module.exports = {
                                 globals.shuffle = false;
                                 globals.isSkipped = false;
                                 globals.schedulerPlaying = false;
+                                globals.nowPlayingMessage = null;
                             }
                         }, 300000)
                     }

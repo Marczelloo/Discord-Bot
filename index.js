@@ -77,6 +77,29 @@ client.on('voiceStateUpdate', (oldState, newState) => {
 	}
 })
 
+client.on('voiceStateUpdate', (oldState, newState) => {
+  const oldChannel = oldState.channel;
+  const newChannel = newState.channel;
+
+  if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
+    const oldMembers = oldChannel.members.size;
+    const newMembers = newChannel.members.size;
+
+    if (oldMembers !== newMembers) {
+		if(newMembers === 1)
+		{
+			setTimeout(() => {
+				if(newChannel.members.size === 1)
+				{
+					vcLeaveReset();
+				}
+			}, 60000);
+		}
+	}
+  }
+});
+
+
 const schedulersPath = path.join(__dirname, 'commands/music/schedulers.json');
 try 
 {

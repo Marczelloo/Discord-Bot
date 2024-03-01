@@ -24,5 +24,8 @@ module.exports = {
     nowPlayingMessage: null,
     schedulerPlaying: false,
     timeout: null,
+    autoplay: false,
+    spotify_token: null,
+    spotify_token_expires: null,
 };
 

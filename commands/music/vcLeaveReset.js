@@ -13,6 +13,16 @@ function vcLeaveReset()
     globals.player = null;
     globals.resource = null;
     globals.queue = [];
+    globals.playedSongs = [];
+    globals.firstCommandTimestamp = null;
+    globals.nowPlayingMessage = null;
+    globals.eqEffect = null;
+    globals.loop = globals.LoopType.NO_LOOP;
+    globals.shuffle = false;
+    globals.isSkipped = false;
+    globals.schedulerPlaying = false;
+    globals.timeout = null;
+    globals.autoplay = false;
     
     
     fs.access(__dirname + "/output.ogg", fs.F_OK, (err) => {
