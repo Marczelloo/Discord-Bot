@@ -328,6 +328,8 @@ module.exports = {
                 }
                 else
                 {
+                    songInfo = await YouTube.getVideo(url);
+                    
                     if(songInfo.nsfw)
                         globals.ageRestricted = true;
                     else
@@ -394,7 +396,8 @@ module.exports = {
             }            
         }
 
-        if (song) {
+        if (song) 
+        {
             const findSongByName = async (song, voiceCom) => {
                 const searchResults = await ytsr(song, { limit: 1 });
                 const video = searchResults.items[0];
@@ -818,7 +821,9 @@ module.exports = {
                                 if(globals.shuffle)
                                 {
                                     globals.originalQueue = globals.queue;
+                                    const firstSong = globals.queue.shift();
                                     globals.queue = globals.queue.sort(() => Math.random() - 0.5);
+                                    globals.queue.unshift(firstSong);
                                 }
                                 else
                                 {

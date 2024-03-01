@@ -63,7 +63,7 @@ module.exports = {
                     return;
                 }
     
-                globals.resource.volume.setVolume(volume / 10);
+                globals.resource.volume.setVolume(volume / 100);
     
                 const embed = new EmbedBuilder()
                 .setColor(0x00ff00)
@@ -82,6 +82,6 @@ module.exports = {
             }
             module.exports = changeVolume;
 
-            changeVolume(volume / 100, false)        
+            changeVolume(volume, false)        
         }
 }
