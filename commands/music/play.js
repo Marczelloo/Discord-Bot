@@ -14,26 +14,34 @@ const globals  = require('../../global.js');
 
 const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require('./eqFunctions.js');
 const { setTimeout } = require('timers');
-const { clear } = require('console');
-const { encode } = require('punycode');
+
 
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('play')
         .setDescription('Play song from YouTube')
         .addStringOption(option => option
-            .setName('name')
-            .setDescription('Song name')
-            .setRequired(true)
-        )
-        .addStringOption(option => option
-            .setName('url')
-            .setDescription('YouTube or Spotify URL')
+            .setName('query')
+            .setDescription('Song name, YouTube URL or Spotify URL')
             .setRequired(true)
         ),
+        // .addStringOption(option => option
+        //     .setName('name')
+        //     .setDescription('Song name')
+        //     .setRequired(true)
+        // )
+        // .addStringOption(option => option
+        //     .setName('url')
+        //     .setDescription('YouTube or Spotify URL')
+        //     .setRequired(true)
+        // ),
 
     async execute(interaction) 
     {
+        if(globals.firstCommandTimestamp == null)
+        {
+            globals.firstCommandTimestamp = Date.now();
+        }
         await interaction.deferReply();
 
         const playingRow = new ActionRowBuilder();
@@ -104,8 +112,22 @@ module.exports = {
         pausedRow.addComponents([rewindButton, skipButton, resumeButton, loopButton, shuffleButton]);
         disabledButtons.addComponents([disabledRewindButton, disabledSkipButton, disabledPauseButton, disabledLoopButton, disabledshuffleButton]);
 
-        const url = interaction.options.getString('url');
-        const song = interaction.options.getString('name');
+        const query = interaction.options.getString('query');
+        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+
+        let song, url;
+
+        if(urlPattern.test(query))
+        {
+            url = query;
+        }
+        else
+        {
+            song = query;
+        }
+        
+        // const url = interaction.options.getString('url');
+        // const song = interaction.options.getString('name');
 
         const voiceChannel = interaction.member.voice.channel;
 
@@ -235,7 +257,7 @@ module.exports = {
                         .setTimestamp()
                         
                         console.log("Adding playlist to song queue by spotify URL");
-                        console.log(globals.queue);
+
                         await interaction.editReply({ embeds: [embed] });
                     } 
                     catch (error) 
@@ -307,7 +329,7 @@ module.exports = {
                             .setTimestamp()
     
                             console.log("Adding playlist to song queue by URL");
-                            console.log(globals.queue);
+
                             await interaction.editReply({ embeds: [embed] });
                         }
                         catch(err)
@@ -317,7 +339,7 @@ module.exports = {
                             .setColor(0xff0000)
                             .setTitle("Error adding playlist to queue, if the playlist is private, age restricted or your mix, the bot can't add it to the queue")
                             .setTimestamp();
-    
+
                             await interaction.editReply({ embeds: [embed] });
                         }
                     } 
@@ -380,7 +402,8 @@ module.exports = {
                         .setTimestamp()
             
                         console.log("Adding song to song queue by URL");
-                        interaction.editReply({ embeds: [embed] });
+
+                        await interaction.editReply({ embeds: [embed] });
                     }       
                 }
             } 
@@ -456,6 +479,7 @@ module.exports = {
                     .setTimestamp()
 
                     console.log("Adding song to song queue by name");
+
                     if(voiceCom)
                     {
                         await globals.commandChannel.send({ embeds: [embed] });
@@ -473,11 +497,6 @@ module.exports = {
         }
 
         globals.guildId = interaction.guild.id;
-
-        if(globals.firstCommandTimestamp === null)
-        {
-            globals.firstCommandTimestamp = Date.now();
-        }
 
         if (globals.queue.length >= 1) {
             const connection = joinVoiceChannel({
@@ -1064,11 +1083,12 @@ module.exports = {
 
                         globals.commandChannel.messages
                             .fetch({ limit: 100 })
-                            .then((messages) => {
-                                const botMessages = messages.filter(
+                            .then(async (messages) => {
+                                const botMessages = await  messages.filter(
                                     (message) =>
                                         message.author.bot && message.createdTimestamp > globals.firstCommandTimestamp
                                 );
+                                
                                 globals.commandChannel
                                 .bulkDelete(botMessages, true)
                                 .then(() => {
@@ -1096,6 +1116,7 @@ module.exports = {
                             globals.shuffle = false;
                             globals.isSkipped = false;
                             globals.schedulerPlaying = false;
+                            globals.nowPlayingMessage = null;
 
                         }, 300000)
                     }
