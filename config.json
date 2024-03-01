@@ -1,7 +1,8 @@
 {
+
   "token": "your-discord-token",
   "clientId": "your-client-id",
-  "guildId": "your-guild-id",
+  "guildId": "your-guild-id", //optional
   "db_user": "your_db_user",
 	"db_pass": "your_db_user_pass",
 	"db_host": "your_db_host",
