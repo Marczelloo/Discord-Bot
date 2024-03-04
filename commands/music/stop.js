@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 
-const globasl = require('../../global.js');
+const globals = require('../../global.js');
 
 module.exports = {
     data: new SlashCommandBuilder()

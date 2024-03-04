@@ -27,5 +27,6 @@ module.exports = {
     autoplay: false,
     spotify_token: null,
     spotify_token_expires: null,
+    playerMessage: null,
 };
 

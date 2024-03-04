@@ -25,16 +25,6 @@ module.exports = {
             .setDescription('Song name, YouTube URL or Spotify URL')
             .setRequired(true)
         ),
-        // .addStringOption(option => option
-        //     .setName('name')
-        //     .setDescription('Song name')
-        //     .setRequired(true)
-        // )
-        // .addStringOption(option => option
-        //     .setName('url')
-        //     .setDescription('YouTube or Spotify URL')
-        //     .setRequired(true)
-        // ),
 
     async execute(interaction) 
     {
@@ -42,6 +32,7 @@ module.exports = {
         {
             globals.firstCommandTimestamp = Date.now();
         }
+        
         await interaction.deferReply();
 
         const playingRow = new ActionRowBuilder();
@@ -112,24 +103,26 @@ module.exports = {
         pausedRow.addComponents([rewindButton, skipButton, resumeButton, loopButton, shuffleButton]);
         disabledButtons.addComponents([disabledRewindButton, disabledSkipButton, disabledPauseButton, disabledLoopButton, disabledshuffleButton]);
 
-        const query = interaction.options.getString('query');
-        const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+        const query = await interaction.options.getString('query');
+        const linkRegex = /((http|https):\/\/(www\.)?(?!youtu\.be)[\w\-_]+(\.[\w\-_]+)*([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?)/gi;
+        
+        let song = null;
+        let url = null;
+        
+        const linkMatch = linkRegex.test(query);
 
-        let song, url;
-
-        if(urlPattern.test(query))
+        if (linkMatch) 
         {
             url = query;
-        }
+            console.log("URL: ", url);
+        } 
         else
         {
             song = query;
-        }
-        
-        // const url = interaction.options.getString('url');
-        // const song = interaction.options.getString('name');
-
-        const voiceChannel = interaction.member.voice.channel;
+            console.log("Song: ", song);
+        } 
+    
+        const voiceChannel = await interaction.member.voice.channel;
 
         if (!voiceChannel) {
             const embed = new EmbedBuilder()
@@ -245,8 +238,6 @@ module.exports = {
                                 image: track.track.album.images[0].url,
                                 length: formatedTime,
                             };
-
-                            console.log(newSong);
 
                             globals.queue.push(newSong);
                         }));
@@ -542,6 +533,16 @@ module.exports = {
                     }
                 }
 
+                if(globals.queue[0].url.includes('spotify'))
+                {
+                    const video = await ytsr(globals.queue[0].title + " "  + globals.queue[0].artist, { limit: 1 });
+                    const videoInfo = video.items[0];
+
+                    globals.queue[0].yt_url = videoInfo.url;
+                    globals.queue[0].length = videoInfo.duration;
+                    globals.queue[0].artist_url = videoInfo.author.bestAvatar.url;
+                }
+
                 const nowPlayingEmbedFields = [
                     { name: 'Length: ', value: formattedTime, inline: true },
                     { name: 'Status', value: globals.player.state.status === AudioPlayerStatus.Playing ? 'Playing' : 'Paused' , inline: true },
@@ -560,14 +561,6 @@ module.exports = {
                 .setTimestamp()
                 
                 outputFilePath = path.resolve(__dirname, 'output.ogg');  
-
-                if(globals.queue[0].url.includes('spotify'))
-                {
-                    const video = await ytsr(globals.queue[0].title, { limit: 1 });
-                    const videoInfo = video.items[0];
-
-                    globals.queue[0].yt_url = videoInfo.url;
-                }
 
                 if(globals.ageRestricted)
                 {
@@ -686,25 +679,27 @@ module.exports = {
                     if (globals.nowPlayingMessage) 
                     {
                         console.log("Now playing message exists, updating it");
-                        interaction.channel.messages.fetch(globals.nowPlayingMessage)
-                            .then(message => {
+                        await interaction.channel.messages.fetch(globals.nowPlayingMessage)
+                            .then(async message => {
                                 if (message) message.delete().catch(console.error);
 
                                 try
                                 {
                                     if(globals.player.AudioPlayerStatus === AudioPlayerStatus.Paused)
                                     {
-                                        interaction.channel.send({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' })
+                                        globals.coll = await interaction.channel.send({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' })
                                         .then(nowPlayingMessage => {
                                             globals.nowPlayingMessage = nowPlayingMessage.id;
+                                            globals.playerMessage = nowPlayingMessage;
                                         })
                                         .catch(console.error);
                                     }
                                     else
                                     {
-                                        interaction.channel.send({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' })
+                                        globals.coll = await interaction.channel.send({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' })
                                         .then(nowPlayingMessage => {
                                             globals.nowPlayingMessage = nowPlayingMessage.id;
+                                            globals.playerMessage = nowPlayingMessage;
                                         })
                                         .catch(console.error);
                                     }
@@ -727,18 +722,23 @@ module.exports = {
                         if (globals.player.AudioPlayerStatus === AudioPlayerStatus.Paused) 
                         {
                             console.log("Sending paused message");
-                            interaction.channel.send({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' })
+                            globals.coll = await interaction.channel.send({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' })
                                 .then(nowPlayingMessage => {
                                     globals.nowPlayingMessage = nowPlayingMessage.id;
-                                }).catch(console.error);
+                                    globals.playerMessage = nowPlayingMessage;
+                                })
+                                .catch(console.error);
                         } 
                         else 
                         {
                             console.log("Sending playing message");
-                            interaction.channel.send({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' })
+                            await interaction.channel.send({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' })
                                 .then(nowPlayingMessage => {
                                     globals.nowPlayingMessage = nowPlayingMessage.id;
-                                }).catch(console.error);
+                                    globals.playerMessage = nowPlayingMessage;
+                                })
+                                .catch(console.error);
+                                
                         }
                     }
                     
@@ -746,7 +746,19 @@ module.exports = {
                     const filter = () => true;
                     try
                     {
-                        const collector = globals.commandChannel.createMessageComponentCollector({ filter, time: null });
+                        let collector;
+                        try
+                        {
+                            collector = await globals.playerMessage.createMessageComponentCollector({ filter, time: null });
+                            //collector = await interaction.channel.createMessageComponentCollector({ filter, time: null });
+                        }
+                        catch(e)
+                        {
+                            console.error("Error creating collector: ");
+                            console.error(e);
+
+                            collector = globals.commandChannel.createMessageComponentCollector({ filter, time: null });
+                        }
 
                         collector.on('collect', async(confirmation) => {
                             if(confirmation.customId === 'rewind-button')
@@ -757,7 +769,19 @@ module.exports = {
                                     globals.queue.unshift(globals.queue[0])
                                     collector.stop();
                                     globals.player.stop();
-                                    await confirmation.update({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
+                                    
+                                    try
+                                    {
+                                        await confirmation.update({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
+                                    }
+                                    catch(err)
+                                    {
+                                        console.error("Error updating message: ");
+                                        console.error(err);
+
+                                        await globals.playerMessage.edit({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
+                                    }   
+
                                     return;
                                 }
                             
@@ -770,15 +794,37 @@ module.exports = {
                                 nowPlayingEmbed.setFields(nowPlayingEmbedFields);
                                 collector.stop();
 
-                                await confirmation.update({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
-                            }
+                                try
+                                {
+                                    await confirmation.update({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
+                                }
+                                catch(err)
+                                {
+                                    console.error("Error updating message: ");
+                                    console.error(err);
+
+                                    await globals.playerMessage.edit({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
+                                }                               }
                             else if(confirmation.customId === "skip-button")
                             {
                                 console.log("Skip button clicked. Skipping the song");
                                 collector.stop();
                                 globals.player.stop();
 
-                                await confirmation.update({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
+                                try
+                                {
+                                    await confirmation.update({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
+                                }
+                                catch(err)
+                                {
+                                    console.error("Error updating message: ");
+                                    console.error(err);
+
+                                    collector.stop();
+                                    globals.player.stop();
+
+                                    await globals.playerMessage.edit({ embeds: [nowPlayingEmbed], components:[disabledButtons], position: 'end' });
+                                }   
                             }
                             else if(confirmation.customId === "pause-button")
                             {
@@ -787,8 +833,18 @@ module.exports = {
 
                                 nowPlayingEmbedFields[1].value = 'Paused';
                                 nowPlayingEmbed.setFields(nowPlayingEmbedFields);
-                            
-                                await confirmation.update({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' });
+
+                                try
+                                {
+                                    await confirmation.update({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' });
+                                }
+                                catch(err)
+                                {
+                                    console.error("Error updating message: ");
+                                    console.error(err);
+
+                                    await globals.playerMessage.edit({ embeds: [nowPlayingEmbed], components: [pausedRow], position: 'end' })
+                                }                           
                             }
                             else if(confirmation.customId === "resume-button")
                             {
@@ -797,8 +853,18 @@ module.exports = {
 
                                 nowPlayingEmbedFields[1].value = 'Playing';
                                 nowPlayingEmbed.setFields(nowPlayingEmbedFields);
+  
+                                try
+                                {
+                                    await confirmation.update({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' });
+                                }
+                                catch(err)
+                                {
+                                    console.error("Error updating message: ");
+                                    console.error(err);
 
-                                await confirmation.update({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' });
+                                    await globals.playerMessage.edit({ embeds: [nowPlayingEmbed], components: [playingRow], position: 'end' });
+                                }
                             }
                             else if(confirmation.customId === "loop-button")
                             {
@@ -829,7 +895,17 @@ module.exports = {
                                 nowPlayingEmbedFields[2].value = globals.loop === globals.LoopType.NO_LOOP ? 'No loop' : globals.loop === globals.LoopType.LOOP_SONG ? 'Song loop' : 'Queue loop';
                                 nowPlayingEmbed.setFields(nowPlayingEmbedFields);
                                
-                                await confirmation.update({ embeds: [nowPlayingEmbed], position: 'end' });
+                                try
+                                {
+                                    await confirmation.update({ embeds: [nowPlayingEmbed], position: 'end' });
+                                }
+                                catch(err)
+                                {
+                                    console.error("Error updating message: ");
+                                    console.error(err);
+
+                                    await globals.playerMessage.edit({  embeds: [nowPlayingEmbed], position: 'end' });
+                                }    
 
                             }
                             else if(confirmation.customId === "shuffle-button")
@@ -852,7 +928,17 @@ module.exports = {
                                 nowPlayingEmbedFields[5].value = globals.shuffle ? 'On' : 'Off';
                                 nowPlayingEmbed.setFields(nowPlayingEmbedFields);
 
-                                await confirmation.update({ embeds: [nowPlayingEmbed], position: 'end' });
+                                try
+                                {
+                                    await confirmation.update({ embeds: [nowPlayingEmbed], position: 'end' });
+                                }
+                                catch(err)
+                                {
+                                    console.error("Error updating message: ");
+                                    console.error(err);
+
+                                    await globals.playerMessage.edit({  embeds: [nowPlayingEmbed], position: 'end' });
+                                }    
                             }                            
                         })
                     }
@@ -1073,20 +1159,23 @@ module.exports = {
 
                     if (globals.queue.length === 0) 
                     {
+                        globals.nowPlayingMessage = null;
+                        globals.firstCommandTimestamp = null;
+
                         console.log("Queue empty, disconnecting, clearing variables and deleting messages");
                         globals.commandChannel.messages
                             .fetch(globals.nowPlayingMessage)
                             .then((message) => {
-                                if (message) message.delete().catch(console.error);
+                                if (message) message.delete();
                             })
                             .catch(console.error);
 
                         globals.commandChannel.messages
                             .fetch({ limit: 100 })
                             .then(async (messages) => {
-                                const botMessages = await  messages.filter(
+                                const botMessages = await messages.filter(
                                     (message) =>
-                                        message.author.bot && message.createdTimestamp > globals.firstCommandTimestamp
+                                        message.author.bot && (message.createdTimestamp > globals.firstCommandTimestamp)
                                 );
                                 
                                 globals.commandChannel
