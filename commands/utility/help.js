@@ -208,43 +208,93 @@ module.exports = {
                         row.components[0].setDisabled(true);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [helpEmbed], components: [row], ephemeral: true });
+                        try
+                        {
+                            await confirmation.update({ embeds: [helpEmbed], components: [row], ephemeral: true });
+                        }
+                        catch(e)
+                        {
+                            console.error(e);
+                        }
                         break;
                     case 1:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [utilityEmbed], components: [row], ephemeral: true });
+                        try
+                        {
+                            await confirmation.update({ embeds: [utilityEmbed], components: [row], ephemeral: true });
+                        }
+                        catch(e)
+                        {
+                            console.error(e);
+                        }
                         break;
                     case 2:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [funEmbed], components: [row], ephemeral: true });
+                        try
+                        {
+                            await confirmation.update({ embeds: [funEmbed], components: [row], ephemeral: true });
+                        }
+                        catch(e)
+                        {
+                            console.error(e);
+                        }
                         break;
                     case 3:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [moderationEmbed], components: [row], ephemeral: true });
+                        try
+                        {
+                            await confirmation.update({ embeds: [moderationEmbed], components: [row], ephemeral: true });
+                        }
+                        catch(e)
+                        {
+                            console.error(e);
+                        }
                         break;
                     case 4:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [musicEmbed], components: [row], ephemeral: true });
+                        try
+                        {
+                            await confirmation.update({ embeds: [musicEmbed], components: [row], ephemeral: true });
+                        }
+                        catch(e)
+                        {
+                            console.error(e);
+                        }
                         break;
                     case 5:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(false);
 
-                        await confirmation.update({ embeds: [todoEmbed], components: [row], ephemeral: true });
+                        try
+                        {
+                            await confirmation.update({ embeds: [todoEmbed], components: [row], ephemeral: true });
+                        }
+                        catch(e)
+                        {
+                            console.error(e);
+                        }
                         break;
                     case 6:
                         row.components[0].setDisabled(false);
                         row.components[2].setDisabled(true);
 
-                        await confirmation.update({ embeds: [allEmbed], components: [row], ephemeral: true });
+                        try
+                        {
+                            await confirmation.update({ embeds: [allEmbed], components: [row], ephemeral: true });
+                        }
+                        catch(e)
+                        {
+                            console.error(e);
+                        }
+
                         break;
                 }
             });
