@@ -588,7 +588,7 @@ module.exports = {
                         }
                     }
     
-                    const ytdlp_path =path.resolve(__dirname, "yt-dlp.exe"); 
+                    const ytdlp_path =path.resolve(__dirname, "yt-dlp-lin"); 
                     const command = `${ytdlp_path} -x --audio-format vorbis -o ${path.resolve(__dirname, "output")} ${globals.queue[0].url}`;
                     console.log("Age restricted song processing");
                     await executeCommand(command);
