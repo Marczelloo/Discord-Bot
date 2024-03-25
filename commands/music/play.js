@@ -104,7 +104,8 @@ module.exports = {
         disabledButtons.addComponents([disabledRewindButton, disabledSkipButton, disabledPauseButton, disabledLoopButton, disabledshuffleButton]);
 
         const query = await interaction.options.getString('query');
-        const linkRegex = /((http|https):\/\/(www\.)?(?!youtu\.be)[\w\-_]+(\.[\w\-_]+)*([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?)/gi;
+        //const linkRegex = /((http|https):\/\/(www\.)?(?!youtu\.be)[\w\-_]+(\.[\w\-_]+)*([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?)/gi;
+        const linkRegex = /((http|https):\/\/(www\.)?[\w\-_]+(\.[\w\-_]+)*([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?)/gi;
         
         let song = null;
         let url = null;
@@ -147,8 +148,9 @@ module.exports = {
         globals.commandChannel = interaction.channel;
 
         if (url) {
+            
             const isSpotifyUrl = url.includes('spotify');
-            const isYoutubeUrl = url.includes('youtube');
+            const isYoutubeUrl = /(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=[^&]+|youtu\.be\/[^&]+)/.test(url);            //const isYoutubeUrl = url.includes('youtube');
 
             let songInfo;
             let playlist;
