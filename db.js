@@ -13,7 +13,7 @@ con.connect(function (err) {
         console.error(err);
         process.exit(1);
     }
-    console.log("Connected to nigusfigus database!");
+    console.log(`Connected to ${db_name} database!`);
 });
 
 process.on('exit', function () {
