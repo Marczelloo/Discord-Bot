@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const con = require('../../db.js');
+const { connect, disconnect } = require('../../db.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -54,9 +55,11 @@ module.exports = {
         } 
         else 
         {
+            connect();
             const query = `INSERT INTO todo (user_id, title, description, deadline) VALUES('${user}', '${title}', '${desc}', '${deadline}');`;
             con.query(query, function (err, result) {
-                if (err) {
+                if (err) 
+                {
                     console.error(err);
                     error.push(err);
 
@@ -67,8 +70,9 @@ module.exports = {
                     .setTimestamp();
 
                     interaction.reply({ embeds: [failed] });
-                } else {
-
+                } 
+                else 
+                {
                     result = "Task " + title + " added successfully";
 
                     const success = new EmbedBuilder()
@@ -80,6 +84,7 @@ module.exports = {
                     interaction.reply({ embeds: [success] });
                 }
             });
+            disconnect();
         }
     }
 };

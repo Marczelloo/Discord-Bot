@@ -1,5 +1,6 @@
 const { SlashCommandBuilder,  italic, EmbedBuilder } = require('discord.js');
 const con = require('../../db');
+const { connect, disconnect } = require('../../db');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,6 +16,7 @@ module.exports = {
         let tasks;
 
         try {
+            connect();
           const query = `SELECT title, description, deadline FROM todo WHERE user_id = ${user}`;
            
           con.query(query, function(err, result){
@@ -55,6 +57,7 @@ module.exports = {
                 }
             } 
           });
+          disconnect();
         } catch(err){
             console.log(err);
 

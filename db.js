@@ -8,16 +8,35 @@ const con = mysql.createConnection({
     database: db_name
 });
 
-con.connect(function (err) {
-    if (err) {
-        console.error(err);
-        process.exit(1);
-    }
-    console.log(`Connected to ${db_name} database!`);
-});
+const connect = () => {
+    con.connect(function (err) {
+        if (err) {
+            console.error(err);
+            process.exit(1);
+        }
+        console.log(`Connected to ${db_name} database!`);
+    });
+}
 
-process.on('exit', function () {
+
+const disconnect = () => {
     con.end();
-});
+}
 
-module.exports = con;
+// con.connect(function (err) {
+//     if (err) {
+//         console.error(err);
+//         process.exit(1);
+//     }
+//     console.log(`Connected to ${db_name} database!`);
+// });
+
+// process.on('exit', function () {
+//     con.end();
+// });
+
+module.exports = { 
+    con,
+    connect, 
+    disconnect
+}

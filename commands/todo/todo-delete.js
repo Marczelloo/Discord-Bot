@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const con = require('../../db');
+const { connect, disconnect } = require('../../db');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -24,6 +25,7 @@ module.exports = {
     
         let errors = [];
         try {
+            connect();
             const query = `SELECT * from todo WHERE title = '${title}'`;
 
             con.query(query, function(err, result) {
@@ -71,6 +73,7 @@ module.exports = {
                     }
                 }
             });
+            disconnect();
         } catch (err) {
             console.log(err);
 
