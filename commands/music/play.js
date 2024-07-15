@@ -4,7 +4,7 @@ const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { spotify_clientID, spotify_clientSecret } = require('../../config.json');
 
 const YouTube = require('youtube-sr').default;
-const ytdl = require('ytdl-core');
+const ytdl = require("@distube/ytdl-core");
 const ytsr = require('ytsr');
 const fs = require('fs');
 const path = require('path');
@@ -149,7 +149,7 @@ module.exports = {
         if (url) {
             
             const isSpotifyUrl = url.includes('spotify');
-            const isYoutubeUrl = /(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=[^&]+|youtu\.be\/[^&]+)/.test(url);            //const isYoutubeUrl = url.includes('youtube');
+            const isYoutubeUrl = /(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=[^&]+|youtu\.be\/[^&]+)/.test(url);
 
             let songInfo;
             let playlist;
@@ -590,28 +590,68 @@ module.exports = {
                         }
                     }
     
-                    const ytdlp_path =path.resolve(__dirname, "yt-dlp-lin"); 
-                    const command = `${ytdlp_path} -x --audio-format vorbis -o ${path.resolve(__dirname, "output")} ${globals.queue[0].url}`;
+                    const ytdlp_path = `"${path.resolve(__dirname, "yt-dlp.exe")}"`;
+                    const outputPath = `"${path.resolve(__dirname, "output")}"`;
+                    const command = `${ytdlp_path} -x --audio-format vorbis -o ${outputPath} ${globals.queue[0].url}`;
                     console.log("Age restricted song processing");
                     await executeCommand(command);
                     console.log("Age restricted song processed");
                 }
                 else
                 { 
-                    console.log("Downloading audio");
-                    let stream;
+                    try 
+                    {
+                        console.log("Downloading audio");
+                        let stream;
 
-                    if(globals.queue[0].url.includes('spotify'))
-                        stream = ytdl(globals.queue[0].yt_url, { filter: 'audioonly', quality: 'highestaudio' });
-                    else
-                        stream = ytdl(globals.queue[0].url, { filter: 'audioonly', quality: 'highestaudio' });
-                    
-                    const writer = stream.pipe(fs.createWriteStream(outputFilePath));
-                
-                    writer.on('finish', () => { 
-                        console.log("Audio downloaded successfully");
-                        play();
-                    })
+                        
+
+                        if(globals.queue[0].url.includes('spotify'))
+                            stream = ytdl(globals.queue[0].yt_url, { filter: 'audioonly', quality: 'highestaudio' });
+                        else
+                            stream = ytdl(globals.queue[0].url, { filter: 'audioonly', quality: 'highestaudio' });
+
+                        stream.on('error', error => {
+                            console.error(`Stream error: ${error.message}`);
+                        });
+
+                        const writer = stream.pipe(fs.createWriteStream(outputFilePath));
+
+                        let totalSize = 0;
+                        stream.on('response', (res) => {
+                            totalSize = res.headers['content-length'];
+                        });
+
+                        let downloadedSize = 0;
+                        stream.on('data', (chunk) => {
+                            downloadedSize += chunk.length;
+                            const progress = (downloadedSize / totalSize) * 100;
+                            process.stdout.clearLine();
+                            process.stdout.cursorTo(0);
+                            process.stdout.write(`Downloading: ${progress.toFixed(2)}%`);
+                        });
+
+                        writer.on('finish', () => {
+                            console.log("\nAudio downloaded successfully");
+                            play();
+                        });
+
+                        writer.on('error', error => {
+                            console.error(`Write stream error: ${error.message}`);
+                        });
+                    } 
+                    catch (error) 
+                    {
+                        console.error("Error downloading audio: " + error);
+                        const embed = new EmbedBuilder()
+                            .setColor(0xff0000)
+                            .setTitle("Error downloading audio")
+                            .setTimestamp();
+
+                        await interaction.editReply({ embeds: [embed] });
+                        globals.queue.shift();
+                        playNextSong();
+                    }
                 }
 
                 async function play()  {
