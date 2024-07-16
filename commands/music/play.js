@@ -14,6 +14,9 @@ const globals  = require('../../global.js');
 
 const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require('./eqFunctions.js');
 const { setTimeout } = require('timers');
+const { createButton } = require('../../helpers/createButton.js');
+const { testLink } = require('../../helpers/testLink.js');
+const { errorEmbed } = require('../../helpers/errorEmbed.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -38,455 +41,385 @@ module.exports = {
         const pausedRow = new ActionRowBuilder();
         const disabledButtons = new ActionRowBuilder();
 
-        const skipButton = new ButtonBuilder()
-        .setCustomId('skip-button')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('1198248590087307385');
-
-        const disabledSkipButton = new ButtonBuilder()
-        .setCustomId('skip-button')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('1198248590087307385')
-        .setDisabled(true);
-
-        const rewindButton = new ButtonBuilder()
-        .setCustomId('rewind-button')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('1198248587369386134');
-
-        const disabledRewindButton = new ButtonBuilder()
-        .setCustomId('rewind-button')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('1198248587369386134')
-        .setDisabled(true);
-
-        const pauseButton = new ButtonBuilder()
-        .setCustomId('pause-button')
-        .setStyle(ButtonStyle.Danger)
-        .setEmoji('1198248585624571904');
-
-        const disabledPauseButton = new ButtonBuilder()
-        .setCustomId('pause-button')
-        .setStyle(ButtonStyle.Danger)
-        .setEmoji('1198248585624571904')
-        .setDisabled(true);
-
-        const resumeButton = new ButtonBuilder()
-        .setCustomId('resume-button')
-        .setStyle(ButtonStyle.Success)
-        .setEmoji('1198248583162511430');
-        
-        const loopButton = new ButtonBuilder()
-        .setCustomId('loop-button')
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji('1198248581304418396');
-
-        const disabledLoopButton = new ButtonBuilder()
-        .setCustomId('loop-button')
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji('1198248581304418396')
-        .setDisabled(true);
-
-        const shuffleButton = new ButtonBuilder()
-        .setCustomId('shuffle-button')
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji('1198248578146115605')
-
-        const disabledshuffleButton = new ButtonBuilder()
-        .setCustomId('shuffle-button')
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji('1198248578146115605')
-        .setDisabled(true);
+        const skipButton = createButton('skip-button', ButtonStyle.Secondary, '1198248590087307385');
+        const disabledSkipButton = createButton('skip-button', ButtonStyle.Secondary, '1198248590087307385', true);
+        const rewindButton = createButton('rewind-button', ButtonStyle.Secondary, '1198248587369386134');
+        const disabledRewindButton = createButton('rewind-button', ButtonStyle.Secondary, '1198248587369386134', true);
+        const pauseButton = createButton('pause-button', ButtonStyle.Danger, '1198248585624571904');
+        const disabledPauseButton = createButton('pause-button', ButtonStyle.Danger, '1198248585624571904', true);
+        const resumeButton = createButton('resume-button', ButtonStyle.Success, '1198248583162511430');
+        const loopButton = createButton('loop-button', ButtonStyle.Primary, '1198248581304418396');
+        const disabledLoopButton = createButton('loop-button', ButtonStyle.Primary, '1198248581304418396', true);
+        const shuffleButton = createButton('shuffle-button', ButtonStyle.Primary, '1198248578146115605')
+        const disabledshuffleButton = createButton('shuffle-button', ButtonStyle.Primary, '1198248578146115605', true);
         
         playingRow.addComponents([rewindButton, skipButton, pauseButton, loopButton, shuffleButton]);
         pausedRow.addComponents([rewindButton, skipButton, resumeButton, loopButton, shuffleButton]);
         disabledButtons.addComponents([disabledRewindButton, disabledSkipButton, disabledPauseButton, disabledLoopButton, disabledshuffleButton]);
 
         const query = await interaction.options.getString('query');
-        //const linkRegex = /((http|https):\/\/(www\.)?(?!youtu\.be)[\w\-_]+(\.[\w\-_]+)*([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?)/gi;
-        const linkRegex = /((http|https):\/\/(www\.)?[\w\-_]+(\.[\w\-_]+)*([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?)/gi;
-        
-        let song = null;
-        let url = null;
-        
-        const linkMatch = linkRegex.test(query);
 
-        if (linkMatch) 
-        {
-            url = query;
-            console.log("URL: ", url);
-        } 
-        else
-        {
-            song = query;
-            console.log("Song: ", song);
-        } 
-    
+        const song = testLink(query);
+       
         const voiceChannel = await interaction.member.voice.channel;
 
         if (!voiceChannel) {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("You need to be in a voice channel to play music")
-            .setTimestamp()
-
-            await interaction.editReply({ embeds: [embed] });
+            await interaction.editReply({ embeds: [errorEmbed("You need to be in a voice channel to play music")]});
             return;
         }
 
-        if (!url && !song) {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("You need to provide a YouTube URL or a song name")
-            .setTimestamp()
-
-            await interaction.editReply({ embeds: [embed] });
+        if (!query) {
+            await interaction.editReply({ embeds: [errorEmbed("Please provide a song name, YouTube URL or Spotify URL")]});
             return;
         }
+        
+        globals.setGlobalVariable(interaction.guild.id, 'commandChannel', interaction.channel);
 
-        globals.commandChannel = interaction.channel;
+        if(song.type === "link")
+            processUrlSong(song.query, interaction);
+        
+        if(song.type === "title")
+            processTitleSong(song.query, interaction);
 
-        if (url) {
-            
-            const isSpotifyUrl = url.includes('spotify');
-            const isYoutubeUrl = /(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=[^&]+|youtu\.be\/[^&]+)/.test(url);
+        // if (url) {
+        //     const isSpotifyUrl = url.includes('spotify');
+        //     const isYoutubeUrl = /(https?:\/\/)?(www\.)?(youtube\.com\/watch\?v=[^&]+|youtu\.be\/[^&]+)/.test(url);
 
-            let songInfo;
-            let playlist;
+        //     let songInfo;
+        //     let playlist;
 
-            if (isSpotifyUrl) 
-            {
-                const spotifyPlaylistPattern = /^https?:\/\/(open\.)?spotify\.com\/playlist\/[a-zA-Z0-9]+\?/;
-                console.log(spotifyPlaylistPattern.test(url));
+        //     if (isSpotifyUrl) 
+        //     {
+        //         const spotifyPlaylistPattern = /^https?:\/\/(open\.)?spotify\.com\/playlist\/[a-zA-Z0-9]+\?/;
+        //         console.log(spotifyPlaylistPattern.test(url));
 
-                if (spotifyPlaylistPattern.test(url)) 
-                    playlist = true;
-                else
-                    playlist = false;
+        //         if (spotifyPlaylistPattern.test(url)) 
+        //             playlist = true;
+        //         else
+        //             playlist = false;
 
-                if(globals.spotify_token_expires < Date.now() || globals.spotify_token === null)
-                {
-                    try
-                    { 
-                        const reposne = await fetch('https://accounts.spotify.com/api/token', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded',
-                            },
-                            body: new URLSearchParams({
-                                grant_type: 'client_credentials',
-                                client_id: spotify_clientID,
-                                client_secret: spotify_clientSecret
-                            }),
-                        });
+        //         if(globals.spotify_token_expires < Date.now() || globals.spotify_token === null)
+        //         {
+        //             try
+        //             { 
+        //                 const reposne = await fetch('https://accounts.spotify.com/api/token', {
+        //                     method: 'POST',
+        //                     headers: {
+        //                         'Content-Type': 'application/x-www-form-urlencoded',
+        //                     },
+        //                     body: new URLSearchParams({
+        //                         grant_type: 'client_credentials',
+        //                         client_id: spotify_clientID,
+        //                         client_secret: spotify_clientSecret
+        //                     }),
+        //                 });
 
-                        const data = await reposne.json();
-                        if(data.error)
-                        {
-                            console.error("Error obtaining spotify token: " + data.error);
-                            const embed = new EmbedBuilder()
-                            .setColor(0xff0000)
-                            .setTitle("Error obtaining spotify token, please define spotify_clientID and spotify_clientSecret in config.json")
-                            .setTimestamp()
+        //                 const data = await reposne.json();
+        //                 if(data.error)
+        //                 {
+        //                     console.error("Error obtaining spotify token: " + data.error);
+        //                     const embed = new EmbedBuilder()
+        //                     .setColor(0xff0000)
+        //                     .setTitle("Error obtaining spotify token, please define spotify_clientID and spotify_clientSecret in config.json")
+        //                     .setTimestamp()
 
-                            await interaction.editReply({ embeds: [embed] });
-                            return;
-                        }
-                        globals.spotify_token = data.access_token;
-                        globals.spotify_token_expires = Date.now() + (data.expires_in * 1000);
-                    }
-                    catch(err)
-                    {
-                        console.error("Error obtaining spotify token: " + err);
-                        const embed = new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle("Error obtaining spotify token, please define spotify_clientID and spotify_clientSecret in config.json or try again later")
-                        .setTimestamp()
+        //                     await interaction.editReply({ embeds: [embed] });
+        //                     return;
+        //                 }
+        //                 globals.spotify_token = data.access_token;
+        //                 globals.spotify_token_expires = Date.now() + (data.expires_in * 1000);
+        //             }
+        //             catch(err)
+        //             {
+        //                 console.error("Error obtaining spotify token: " + err);
+        //                 const embed = new EmbedBuilder()
+        //                 .setColor(0xff0000)
+        //                 .setTitle("Error obtaining spotify token, please define spotify_clientID and spotify_clientSecret in config.json or try again later")
+        //                 .setTimestamp()
 
-                        await interaction.editReply({ embeds: [embed] });
-                        return;
-                    }
-                }
+        //                 await interaction.editReply({ embeds: [embed] });
+        //                 return;
+        //             }
+        //         }
 
-                if(playlist)
-                { 
-                    const playlistId = url.split('/').pop();
-                    console.log(playlistId);
-                    const apiUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
+        //         if(playlist)
+        //         { 
+        //             const playlistId = url.split('/').pop();
+        //             console.log(playlistId);
+        //             const apiUrl = `https://api.spotify.com/v1/playlists/${playlistId}/tracks`;
 
-                    try 
-                    {
-                        const response = await fetch(apiUrl, {
-                            headers: {
-                                'Authorization': `Bearer ${globals.spotify_token}`
-                            }
-                        });
+        //             try 
+        //             {
+        //                 const response = await fetch(apiUrl, {
+        //                     headers: {
+        //                         'Authorization': `Bearer ${globals.spotify_token}`
+        //                     }
+        //                 });
 
-                        const data = await response.json();
-                        const tracks = data.tracks.items;
+        //                 const data = await response.json();
+        //                 const tracks = data.tracks.items;
 
-                        globals.ageRestricted = false;
+        //                 globals.ageRestricted = false;
 
-                        await Promise.all(tracks.map(async track => {
-                            const time = track.track.duration_ms / 1000;
-                            const formatedTime = time.toString().includes(":") ? time : new Date(time * 1000).toISOString().substr(time < 3600 ? 14 : 11, 5);
+        //                 await Promise.all(tracks.map(async track => {
+        //                     const time = track.track.duration_ms / 1000;
+        //                     const formatedTime = time.toString().includes(":") ? time : new Date(time * 1000).toISOString().substr(time < 3600 ? 14 : 11, 5);
                             
-                            const newSong = {
-                                title: track.track.name,
-                                artist: track.track.artists[0].name,
-                                artist_url: track.track.artists[0].external_urls.spotify,
-                                url: track.track.external_urls.spotify,
-                                image: track.track.album.images[0].url,
-                                length: formatedTime,
-                            };
+        //                     const newSong = {
+        //                         title: track.track.name,
+        //                         artist: track.track.artists[0].name,
+        //                         artist_url: track.track.artists[0].external_urls.spotify,
+        //                         url: track.track.external_urls.spotify,
+        //                         image: track.track.album.images[0].url,
+        //                         length: formatedTime,
+        //                     };
 
-                            globals.queue.push(newSong);
-                        }));
+        //                     globals.queue.push(newSong);
+        //                 }));
                         
-                        const embed = new EmbedBuilder()
-                        .setColor(0x00ff00)
-                        .setTitle('Song are proccessing they will be added in a while')
-                        .setTimestamp()
+        //                 const embed = new EmbedBuilder()
+        //                 .setColor(0x00ff00)
+        //                 .setTitle('Song are proccessing they will be added in a while')
+        //                 .setTimestamp()
                         
-                        console.log("Adding playlist to song queue by spotify URL");
+        //                 console.log("Adding playlist to song queue by spotify URL");
 
-                        await interaction.editReply({ embeds: [embed] });
-                    } 
-                    catch (error) 
-                    {
-                        console.error("Error retrieving Spotify playlist tracks:", error);
-                        const embed = new EmbedBuilder()
-                            .setColor(0xff0000)
-                            .setTitle("Error retrieving Spotify playlist tracks")
-                            .setTimestamp();
+        //                 await interaction.editReply({ embeds: [embed] });
+        //             } 
+        //             catch (error) 
+        //             {
+        //                 console.error("Error retrieving Spotify playlist tracks:", error);
+        //                 const embed = new EmbedBuilder()
+        //                     .setColor(0xff0000)
+        //                     .setTitle("Error retrieving Spotify playlist tracks")
+        //                     .setTimestamp();
 
-                        await interaction.editReply({ embeds: [embed] });
-                        return;
-                    }       
-                }
-                else
-                {
-                    console.log("Spotify song processing");
-                }
-            } 
-            else if(isYoutubeUrl) 
-            {
-                const youtubePlaylistPattern = url.includes('list');
+        //                 await interaction.editReply({ embeds: [embed] });
+        //                 return;
+        //             }       
+        //         }
+        //         else
+        //         {
+        //             console.log("Spotify song processing");
+        //         }
+        //     } 
+        //     else if(isYoutubeUrl) 
+        //     {
+        //         const youtubePlaylistPattern = url.includes('list');
 
-                if (youtubePlaylistPattern) 
-                    playlist = true;
-                else
-                    playlist = false;
+        //         if (youtubePlaylistPattern) 
+        //             playlist = true;
+        //         else
+        //             playlist = false;
 
-                console.log(playlist);
+        //         console.log(playlist);
 
-                if(playlist)
-                {
-                    const regex = /list=([a-zA-Z0-9_-]+)/;
-                    const match = url.match(regex);
-                    if (match) 
-                    {
-                        try
-                        {
-                            const playlistId = match[1];
-                            console.log(`Playlist ID: ${playlistId}`);
+        //         if(playlist)
+        //         {
+        //             const regex = /list=([a-zA-Z0-9_-]+)/;
+        //             const match = url.match(regex);
+        //             if (match) 
+        //             {
+        //                 try
+        //                 {
+        //                     const playlistId = match[1];
+        //                     console.log(`Playlist ID: ${playlistId}`);
     
-                            const playlist = await YouTube.getPlaylist(playlistId);
-                            const videos = await new Promise((resolve, reject) => {
-                                playlist.fetch()
-                                    .then(videos => resolve(videos))
-                                    .catch(error => reject(error));
-                            });
+        //                     const playlist = await YouTube.getPlaylist(playlistId);
+        //                     const videos = await new Promise((resolve, reject) => {
+        //                         playlist.fetch()
+        //                             .then(videos => resolve(videos))
+        //                             .catch(error => reject(error));
+        //                     });
     
-                            const videosArray = Array.from(videos);
+        //                     const videosArray = Array.from(videos);
     
-                            globals.ageRestricted = false;
+        //                     globals.ageRestricted = false;
     
-                            await Promise.all(videosArray.map(video => {
-                                const newSong = {
-                                    title: video.title,
-                                    artist: video.channel.name,
-                                    artist_url: video.channel.icon.url,
-                                    url: video.url,
-                                    image: video.thumbnail.url,
-                                    length: video.durationFormatted,
-                                };
+        //                     await Promise.all(videosArray.map(video => {
+        //                         const newSong = {
+        //                             title: video.title,
+        //                             artist: video.channel.name,
+        //                             artist_url: video.channel.icon.url,
+        //                             url: video.url,
+        //                             image: video.thumbnail.url,
+        //                             length: video.durationFormatted,
+        //                         };
     
-                                globals.queue.push(newSong);
-                            }));
+        //                         globals.queue.push(newSong);
+        //                     }));
     
-                            const embed = new EmbedBuilder()
-                            .setColor(0x00ff00)
-                            .setTitle('Playlist added to queue')
-                            .setTimestamp()
+        //                     const embed = new EmbedBuilder()
+        //                     .setColor(0x00ff00)
+        //                     .setTitle('Playlist added to queue')
+        //                     .setTimestamp()
     
-                            console.log("Adding playlist to song queue by URL");
+        //                     console.log("Adding playlist to song queue by URL");
 
-                            await interaction.editReply({ embeds: [embed] });
-                        }
-                        catch(err)
-                        {
-                            console.error("Error adding playlist to queue: " + err);
-                            const embed = new EmbedBuilder()
-                            .setColor(0xff0000)
-                            .setTitle("Error adding playlist to queue, if the playlist is private, age restricted or your mix, the bot can't add it to the queue")
-                            .setTimestamp();
+        //                     await interaction.editReply({ embeds: [embed] });
+        //                 }
+        //                 catch(err)
+        //                 {
+        //                     console.error("Error adding playlist to queue: " + err);
+        //                     const embed = new EmbedBuilder()
+        //                     .setColor(0xff0000)
+        //                     .setTitle("Error adding playlist to queue, if the playlist is private, age restricted or your mix, the bot can't add it to the queue")
+        //                     .setTimestamp();
 
-                            await interaction.editReply({ embeds: [embed] });
-                        }
-                    } 
-                    else 
-                    {
-                        console.log('No playlist ID found in the URL');
-                    }
-                }
-                else
-                {
-                    songInfo = await YouTube.getVideo(url);
+        //                     await interaction.editReply({ embeds: [embed] });
+        //                 }
+        //             } 
+        //             else 
+        //             {
+        //                 console.log('No playlist ID found in the URL');
+        //             }
+        //         }
+        //         else
+        //         {
+        //             songInfo = await YouTube.getVideo(url);
                     
-                    if(songInfo.nsfw)
-                        globals.ageRestricted = true;
-                    else
-                        globals.ageRestricted = false;
+        //             if(songInfo.nsfw)
+        //                 globals.ageRestricted = true;
+        //             else
+        //                 globals.ageRestricted = false;
                     
-                    if(songInfo === null || songInfo === undefined)
-                    {
-                        const embed = new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle("No search results found for the song")
-                        .setTimestamp();
+        //             if(songInfo === null || songInfo === undefined)
+        //             {
+        //                 const embed = new EmbedBuilder()
+        //                 .setColor(0xff0000)
+        //                 .setTitle("No search results found for the song")
+        //                 .setTimestamp();
                         
-                        console.log("No search results found for the song by URL");
-                        await interaction.editReply({ embeds: [embed] });
-                        return;
-                    }
-                    else if(songInfo.live)
-                    {
-                        const embed = new EmbedBuilder()
-                        .setColor(0xff0000)
-                        .setTitle("You can't play live content")
-                        .setTimestamp()
+        //                 console.log("No search results found for the song by URL");
+        //                 await interaction.editReply({ embeds: [embed] });
+        //                 return;
+        //             }
+        //             else if(songInfo.live)
+        //             {
+        //                 const embed = new EmbedBuilder()
+        //                 .setColor(0xff0000)
+        //                 .setTitle("You can't play live content")
+        //                 .setTimestamp()
         
-                        console.log("You can't play live content");
-                        await interaction.editReply({ embeds: [embed] });
-                        return;
-                    }
-                    else 
-                    {
-                        const newSong = {
-                            title: songInfo.title,
-                            artist: songInfo.channel.name,
-                            artist_url: songInfo.channel.icon.url,
-                            url: url,
-                            image: songInfo.thumbnail.url,
-                            length: songInfo.durationFormatted,
-                        };
+        //                 console.log("You can't play live content");
+        //                 await interaction.editReply({ embeds: [embed] });
+        //                 return;
+        //             }
+        //             else 
+        //             {
+        //                 const newSong = {
+        //                     title: songInfo.title,
+        //                     artist: songInfo.channel.name,
+        //                     artist_url: songInfo.channel.icon.url,
+        //                     url: url,
+        //                     image: songInfo.thumbnail.url,
+        //                     length: songInfo.durationFormatted,
+        //                 };
                         
-                        globals.queue.push(newSong);
+        //                 globals.queue.push(newSong);
                         
-                        const embed = new EmbedBuilder()
-                        .setColor(0x00ff00)
-                        .setAuthor({ name: 'Song added to queue:' })
-                        .setTitle(newSong.title)
-                        .setURL(newSong.url)
-                        .setImage(newSong.image)
-                        .setFooter({ text: "Author: " + newSong.artist, iconURL: newSong.artist_url })
-                        .setTimestamp()
+        //                 const embed = new EmbedBuilder()
+        //                 .setColor(0x00ff00)
+        //                 .setAuthor({ name: 'Song added to queue:' })
+        //                 .setTitle(newSong.title)
+        //                 .setURL(newSong.url)
+        //                 .setImage(newSong.image)
+        //                 .setFooter({ text: "Author: " + newSong.artist, iconURL: newSong.artist_url })
+        //                 .setTimestamp()
             
-                        console.log("Adding song to song queue by URL");
+        //                 console.log("Adding song to song queue by URL");
 
-                        await interaction.editReply({ embeds: [embed] });
-                    }       
-                }
-            } 
-            else 
-            {
-                const embed = new EmbedBuilder()
-                    .setColor(0xff0000)
-                    .setTitle("Invalid URL")
-                    .setTimestamp();
+        //                 await interaction.editReply({ embeds: [embed] });
+        //             }       
+        //         }
+        //     } 
+        //     else 
+        //     {
+        //         const embed = new EmbedBuilder()
+        //             .setColor(0xff0000)
+        //             .setTitle("Invalid URL")
+        //             .setTimestamp();
 
-                await interaction.editReply({ embeds: [embed] });
-                return;
-            }            
-        }
+        //         await interaction.editReply({ embeds: [embed] });
+        //         return;
+        //     }            
+        // }
 
-        if (song) 
-        {
-            const findSongByName = async (song, voiceCom) => {
-                const searchResults = await ytsr(song, { limit: 1 });
-                const video = searchResults.items[0];
+        // if (song) 
+        // {
+        //     const findSongByName = async (song, voiceCom) => {
+        //         const searchResults = await ytsr(song, { limit: 1 });
+        //         const video = searchResults.items[0];
                             
-                await YouTube.getVideo(video.url)
-                .then(video => {
-                    if(video.nsfw)
-                        globals.ageRestricted = true;
-                    else
-                        globals.ageRestricted = false;
-                })
-                .catch(console.error);
+        //         await YouTube.getVideo(video.url)
+        //         .then(video => {
+        //             if(video.nsfw)
+        //                 globals.ageRestricted = true;
+        //             else
+        //                 globals.ageRestricted = false;
+        //         })
+        //         .catch(console.error);
     
-                if (!video) {
-                    const embed = new EmbedBuilder()
-                    .setColor(0xff0000)
-                    .setTitle("No search results found for the song")
-                    .setTimestamp();
+        //         if (!video) {
+        //             const embed = new EmbedBuilder()
+        //             .setColor(0xff0000)
+        //             .setTitle("No search results found for the song")
+        //             .setTimestamp();
                     
-                    console.log("No search results found for the song by name");
-                    await interaction.editReply({ embeds: [embed] });
-                    return;
-                }
+        //             console.log("No search results found for the song by name");
+        //             await interaction.editReply({ embeds: [embed] });
+        //             return;
+        //         }
     
-                if(searchResults.items[0].type === 'live')
-                {
-                    const embed = new EmbedBuilder()
-                    .setColor(0xff0000)
-                    .setTitle("You can't play live content")
-                    .setTimestamp()
+        //         if(searchResults.items[0].type === 'live')
+        //         {
+        //             const embed = new EmbedBuilder()
+        //             .setColor(0xff0000)
+        //             .setTitle("You can't play live content")
+        //             .setTimestamp()
     
-                    console.log("You can't play live content");
-                    await interaction.editReply({ embeds: [embed] });
-                    return;
-                }
-                else
-                {
-                    const newSong = {
-                        title: video.title,
-                        artist: video.author.name,
-                        artist_url: video.author.bestAvatar.url,
-                        url: video.url,
-                        image: video.bestThumbnail.url,
-                        length: video.duration,
-                    };
+        //             console.log("You can't play live content");
+        //             await interaction.editReply({ embeds: [embed] });
+        //             return;
+        //         }
+        //         else
+        //         {
+        //             const newSong = {
+        //                 title: video.title,
+        //                 artist: video.author.name,
+        //                 artist_url: video.author.bestAvatar.url,
+        //                 url: video.url,
+        //                 image: video.bestThumbnail.url,
+        //                 length: video.duration,
+        //             };
         
-                    globals.queue.push(newSong);
-        
-                    const embed = new EmbedBuilder()
-                    .setColor(0x00ff00)
-                    .setAuthor({ name: 'Song added to queue:' })
-                    .setTitle(newSong.title)
-                    .setURL(newSong.url)
-                    .setImage(newSong.image)
-                    .setFooter({ text: "Author: " + newSong.artist, iconURL: newSong.artist_url })
-                    .setTimestamp()
+       
+        //             const embed = new EmbedBuilder()
+        //             .setColor(0x00ff00)
+        //             .setAuthor({ name: 'Song added to queue:' })
+        //             .setTitle(newSong.title)
+        //             .setURL(newSong.url)
+        //             .setImage(newSong.image)
+        //             .setFooter({ text: "Author: " + newSong.artist, iconURL: newSong.artist_url })
+        //             .setTimestamp()
 
-                    console.log("Adding song to song queue by name");
+        //             console.log("Adding song to song queue by name");
 
-                    if(voiceCom)
-                    {
-                        await globals.commandChannel.send({ embeds: [embed] });
-                    }
-                    else
-                    {
-                        await interaction.editReply({ embeds: [embed] });
-                    }
-                }
-            }
+        //             if(voiceCom)
+        //             {
+        //                 await globals.commandChannel.send({ embeds: [embed] });
+        //             }
+        //             else
+        //             {
+        //                 await interaction.editReply({ embeds: [embed] });
+        //             }
+        //         }
+        //     }
 
-            await findSongByName(song, false);
+        //     await findSongByName(song, false);
 
-            module.exports = findSongByName;            
-        }
+        //     module.exports = findSongByName;            
+        // }
 
         globals.guildId = interaction.guild.id;
 
