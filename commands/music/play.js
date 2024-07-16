@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const util = require('util');
 
-const globals  = require('../../global.js');
+const { getServerData, setGlobalVariable }  = require('../../global.js');
 
 const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require('./eqFunctions.js');
 const { setTimeout } = require('timers');
@@ -73,7 +73,7 @@ module.exports = {
             return;
         }
         
-        globals.setGlobalVariable(interaction.guild.id, 'commandChannel', interaction.channel);
+        setGlobalVariable(interaction.guild.id, 'commandChannel', interaction.channel);
 
         if(song.type === "link")
             processUrlSong(song.query, interaction);
@@ -421,7 +421,10 @@ module.exports = {
         //     module.exports = findSongByName;            
         // }
 
-        globals.guildId = interaction.guild.id;
+        //globals.guildId = interaction.guild.id;
+
+        if(getServerData(interaction.guild.id).queue.length >= 1)
+            playSong(interaction, voiceChannel);
 
         if (globals.queue.length >= 1) {
             const connection = joinVoiceChannel({
@@ -536,8 +539,6 @@ module.exports = {
                     {
                         console.log("Downloading audio");
                         let stream;
-
-                        
 
                         if(globals.queue[0].url.includes('spotify'))
                             stream = ytdl(globals.queue[0].yt_url, { filter: 'audioonly', quality: 'highestaudio' });
