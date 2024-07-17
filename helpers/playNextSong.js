@@ -32,9 +32,7 @@ async function playNextSong(interaction,
       {
          const video = await ytsr(getServerData(interaction.guild.id).queue[0].title + " " + getServerData(interaction.guild.id).queue[0].artist, { limit: 1});
          const videoInfo = video.items[0];
-         
-         console.log(videoInfo);
-      
+               
          const song = getServerData(interaction.guild.id).queue[0];
          song.yt_url = videoInfo.url;
          song.length = videoInfo.duration;

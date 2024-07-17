@@ -5,8 +5,8 @@ module.exports = {
    obtainSpotifyToken: async function(interaction) {
       try 
       {
-         const spotify_clientID = process.env.spotify_clientID;
-         const spotify_clientSecret = process.env.spotify_clientSecret;
+         const spotify_clientID = process.env.SPOTIFY_CLIENT_ID;
+         const spotify_clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
          const reposne = await fetch('https://accounts.spotify.com/api/token', {
             method: 'POST',
