@@ -14,9 +14,9 @@ async function bassBoost() {
             } else {
                 ffmpeg(input)
                 .audioFilter([
-                    'equalizer=f=50:width_type=h:width=100:g=8', // Podniesienie basu przy 60 Hz
-                    'equalizer=f=100:width_type=h:width=100:g=10', // Podniesienie średnich tonów przy 400 Hz
-                    'equalizer=f=200:width_type=h:width=100:g=5', // Podniesienie wyższych średnich tonów przy 2500 Hz
+                    'equalizer=f=50:width_type=h:width=100:g=8',
+                    'equalizer=f=100:width_type=h:width=100:g=10',
+                    'equalizer=f=200:width_type=h:width=100:g=5',
                     ])
                     .on('error', (err) => {
                         console.error(err);

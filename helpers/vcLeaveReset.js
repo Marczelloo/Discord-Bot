@@ -1,7 +1,7 @@
 const fs = require('fs');
 const { AudioPlayerStatus } = require('@discordjs/voice');
 
-const { getServerData, clearGlobalVariables } = require('../../global.js');
+const { getServerData, clearGlobalVariables } = require('../global.js');
 const path = require('path');
 
 function vcLeaveReset(guildId)

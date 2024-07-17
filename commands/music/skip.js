@@ -1,7 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { AudioPlayerStatus } = require('@discordjs/voice');
 
-const globals = require('../../global.js');
+const { getServerData, setGlobalVariable, shiftQueue, getClient } = require('../../global.js');
+const { errorEmbed } = require('../../helpers/embeds.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -27,30 +28,20 @@ module.exports = {
                 return;
             }
             
-            const botMember = await guild.members.fetch(globals.client.user.id);
+            const botMember = await guild.members.fetch(getClient().user.id);
             const botVoiceChannel = botMember.voice.channel;
 
             const memberVoiceChannel = interaction.member.voice.channel;
         
             if(botVoiceChannel && memberVoiceChannel && botVoiceChannel.id !== memberVoiceChannel.id)
             {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("You must be in the same voice channel as bot to skip song!")
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
+                interaction.reply({ embeds: [errorEmbed("You must be in the same voice channel as bot to skip song!")] });
                 return;           
             }
 
-            if(globals.player == null || globals.player.state.status !== AudioPlayerStatus.Playing)
+            if(getServerData(interaction.guild.id).player == null || getServerData(interaction.guild.id).player.state.status !== AudioPlayerStatus.Playing)
             {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("There is no song playing")
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
+                interaction.reply({ embeds: [errorEmbed("There is no song playing")] });
                 return;
             }
 
@@ -59,11 +50,11 @@ module.exports = {
             
             if(!amount)
             {
-                const skipedTitle = globals.queue[0].title;
-                const skipedUrl = globals.queue[0].url;
+                const skipedTitle = getServerData(interaction.guild.id).queue[0].title;
+                const skipedUrl = getServerData(interaction.guild.id).queue[0].url;
              
                 console.log("Skipping song");
-                globals.player.stop();
+                getServerData(interaction.guild.id).player.stop();
 
                 const embed = new EmbedBuilder()
                 .setColor(0x00ff00)
@@ -76,14 +67,9 @@ module.exports = {
                 return
             }
 
-            if(amount > globals.queue.length)
+            if(amount > getServerData(interaction.guild.id).queue.length)
             {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("You can't skip more songs than there are in the queue")
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
+                interaction.reply({ embeds: [errorEmbed("You can't skip more song than there are in the queue")] });
                 return;
             }
 
@@ -91,13 +77,13 @@ module.exports = {
             for(let i = 0; i < amount; i++)
             {
                 const skipedSong = { 
-                    title: globals.queue[0].title, 
-                    url: globals.queue[0].url
+                    title: getServerData(interaction.guild.id).queue[0].title, 
+                    url: getServerData(interaction.guild.id).queue[0].url
                 }
                 skippedSongs.push(skipedSong);
-                globals.queue.shift();
+                shiftQueue(interaction.guild.id, "queue");
             }
-            globals.player.stop();
+            getServerData(interaction.guild.id).player.stop();
 
             const embed = new EmbedBuilder()
             .setAuthor({ name: "Skipped multiple songs" })

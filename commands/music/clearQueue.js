@@ -1,6 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('@discordjs/builders');
+const { SlashCommandBuilder } = require('@discordjs/builders');
 
-const globals = require('../../global.js');
+const { getServerData, setGlobalVariable, getClient } = require('../../global.js');
+const { errorEmbed, successEmbed } = require('../../helpers/embeds.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -16,46 +17,31 @@ module.exports = {
             return;
         }
         
-        const botMember = await guild.members.fetch(globals.client.user.id);
+        const botMember = await guild.members.fetch(getClient().user.id);
         const botVoiceChannel = botMember.voice.channel;
         
         const memberVoiceChannel = interaction.member.voice.channel;
         
         if(botVoiceChannel && memberVoiceChannel && botVoiceChannel.id !== memberVoiceChannel.id)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("You must be in the same voice channel as bot to use this command!")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("You must be in the same voice channel as bot to use this command!")] });
             return;           
         }
 
-        if(globals.player == null)
+        if(getServerData(interaction.guild.id).player == null)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("There is no song playing")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("There is no song playing")] });
             return;
         }
 
-        globals.queue = [];
-        globals.originalQueue = [];
-        globals.playedSongs = [];
-        globals.isSkipped = true;
-        globals.loop = globals.LoopType.NO_LOOP;
-        globals.shuffle = false;
-        globals.nowPlayingMessage = null;
+        setGlobalVariable(interaction.guild.id, 'queue', []);
+        setGlobalVariable(interaction.guild.id, 'originalQueue', []);
+        setGlobalVariable(interaction.guild.id, 'playedSongs', []);
+        setGlobalVariable(interaction.guild.id, 'isSkipped', true);
+        setGlobalVariable(interaction.guild.id, 'loop', 'NO_LOOP');
+        setGlobalVariable(interaction.guild.id, 'shuffle', false);
+        setGlobalVariable(interaction.guild.id, 'nowPlayingMessage', null);
 
-        const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle("Queue cleared!")
-        .setTimestamp()
-
-        interaction.reply({ embeds: [embed] });
+        interaction.reply({ embeds: [successEmbed("Queue cleared!")] });
     }
 }

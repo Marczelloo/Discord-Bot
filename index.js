@@ -1,18 +1,17 @@
 require('dotenv').config();
 
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, GatewayIntentBits } = require('discord.js');
 
 const token = process.env.TOKEN;
 
-const { setGlobalVariable } = require('./global.js');
-const globals = require('./global.js');
+const { setGlobalVariable, setClient } = require('./global.js');
 
 const fs = require('fs');
 const path = require('path');
 const cron = require('node-cron');
 
-const vcLeaveReset = require('./commands/music/vcLeaveReset.js');
-const { schedulePlay }  = require('./commands/music/playScheduler.js');
+const vcLeaveReset = require('./helpers/vcLeaveReset.js');
+const { schedulePlay }  = require('./helpers/playScheduler.js');
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds, 
 	GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, 
@@ -36,10 +35,11 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds,
 	GatewayIntentBits.MessageContent,
 	GatewayIntentBits.GuildScheduledEvents, 
 	GatewayIntentBits.AutoModerationConfiguration, 
-	GatewayIntentBits.AutoModerationExecution ]});
+	GatewayIntentBits.AutoModerationExecution ]
+});
 
 client.commands = new Collection();
-globals.client = client;
+setClient(client);
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 

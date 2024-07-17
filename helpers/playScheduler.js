@@ -1,7 +1,7 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, StreamType, VoiceConnectionStatus, AudioPlayerStatus } = require('@discordjs/voice');
 const { getVoiceConnection } = require('@discordjs/voice');
 
-const globals = require('../../global.js');
+const globals = require('../global.js');
 const { readFile } = require('fs').promises;
 const path = require('path');
 

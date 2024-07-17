@@ -4,34 +4,9 @@ const LoopType = {
     LOOP_SONG: 2
 };
 
-// module.exports = {
-//     queue: [],
-//     originalQueue: [],
-//     playedSongs: [],
-//     firstCommandTimestamp: null,
-//     guildId: null,
-//     commandChannel: null,
-//     playEarlier: false,
-//     ageRestricted: false,
-//     player: null,
-//     resource: null,
-//     client: null,
-//     eqEffect: null,
-//     isSkipped: false,
-//     LoopType: LoopType,
-//     loop: LoopType.NO_LOOP,
-//     shuffle: false, //
-//     nowPlayingMessage: null,
-//     schedulerPlaying: false,
-//     timeout: null,
-//     autoplay: false,
-//     spotify_token: null,
-//     spotify_token_expires: null,
-//     playerMessage: null,
-// };
-
-//variables set to work on multiple servers at a time
 const serverData = new Map();
+
+let client = null;
 
 function getServerData(guildId) {
     if (!serverData.has(guildId)) {
@@ -139,8 +114,16 @@ function clearGlobalVariables(guildId) {
     server.spotify_token = null;
     server.spotify_token_expires = null;
     server.playerMessage = null;
-
 }
+
+function getClient() {
+    return client;
+}
+
+function setClient(_client) {
+    client = _client;
+}
+
 module.exports = {
     getServerData: getServerData,
     setGlobalVariable: setGlobalVariable,
@@ -150,5 +133,7 @@ module.exports = {
     unshiftQueue: unshiftQueue,
     clearGlobalVariables: clearGlobalVariables,
     LoopType: LoopType,
+    getClient: getClient,
+    setClient: setClient
 };
 

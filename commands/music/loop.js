@@ -1,8 +1,8 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 const { AudioPlayerStatus } = require('@discordjs/voice');
 
-const globals = require('../../global.js');
-const { text } = require('stream/consumers');
+const { getServerData, setGlobalVariable, LoopType, getClient } = require('../../global.js');
+const { errorEmbed, successEmbed } = require('../../helpers/embeds.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -28,30 +28,20 @@ module.exports = {
             return;
         }
         
-        const botMember = await guild.members.fetch(globals.client.user.id);
+        const botMember = await guild.members.fetch(getClient().user.id);
         const botVoiceChannel = botMember.voice.channel;
 
         const memberVoiceChannel = interaction.member.voice.channel;
     
         if(botVoiceChannel && memberVoiceChannel && botVoiceChannel.id !== memberVoiceChannel.id)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("You must be in the same voice channel as bot to loop song!")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("You must be in the same voice channel as bot to loop song!")] });
             return;           
         }
 
-        if(globals.player == null || globals.player.state.status !== AudioPlayerStatus.Playing)
+        if(getServerData(interaction.guild.id).player == null || getServerData(interaction.guild.id).player.state.status !== AudioPlayerStatus.Playing)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("There is no song playing")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("There is no song playing")] });
             return;
         }
 
@@ -60,35 +50,25 @@ module.exports = {
         let textToDisplay = 'Loop mode set to: ';
         if(loopQueue == 'loop queue')
         {
-            globals.loop = globals.LoopType.LOOP_QUEUE;
+            setGlobalVariable(interaction.guild.id, 'loop', LoopType.LOOP_QUEUE);
             textToDisplay += "queue"
         }
         else if(loopQueue == 'loop song')
         {
-            globals.loop = globals.LoopType.LOOP_SONG;
+            setGlobalVariable(interaction.guild.id, 'loop', LoopType.LOOP_SONG);
             textToDisplay += "song"
         }
         else if(loopQueue == 'no loop')
         {
-            globals.loop = globals.LoopType.NO_LOOP;
+            setGlobalVariable(interaction.guild.id, 'loop', LoopType.NO_LOOP);
             textToDisplay = "Loop mode disabled"
         }
         else
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("Invalid loop type")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("Invalid loop type")] });
             return;
         }
 
-        const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle(textToDisplay)
-        .setTimestamp()
-
-        interaction.reply({ embeds: [embed] });
+        interaction.reply({ embeds: [successEmbed(textToDisplay)] });
     }
 }

@@ -1,8 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const ytdl = require("@distube/ytdl-core");
-const ytsr = require('ytsr');
+const { SlashCommandBuilder } = require('discord.js');
 
-const globals = require('../../global.js');
+const { getServerData, setGlobalVariable, LoopType, getClient } = require('../../global.js');
+const { errorEmbed, successEmbed } = require('../../helpers/embeds.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -14,12 +13,7 @@ module.exports = {
             const memberVoiceChannel = interaction.member.voice.channel;
             if(!memberVoiceChannel)
             {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("You need to be in a voice channel to toggle autoplay")
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
+                interaction.reply({ embeds: [errorEmbed("You need to be in a voice channel to toggle autoplay")] });
                 return;
             }
 
@@ -30,51 +24,30 @@ module.exports = {
                 return;
             }
 
-            const botMember = await guild.members.fetch(globals.client.user.id);
+            const botMember = await guild.members.fetch(getClient().user.id);
             const botVoiceChannel = botMember.voice.channel;
             
             if(botVoiceChannel && memberVoiceChannel && botVoiceChannel.id !== memberVoiceChannel.id)
             {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("You must be in the same voice channel as bot to toggle autoplay!")
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
+                interaction.reply({ embeds: [errorEmbed("You must be in the same voice channel as bot to toggle autoplay!")] });
                 return;           
             }
 
-            const queue = globals.getServerData(interaction.guild.id).queue;
+            const queue = getServerData(interaction.guild.id).queue;
             if(queue == null || queue.length === 0)
             {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("There is no song in queue to toggle autoplay")
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
+                interaction.reply({ embeds: [errorEmbed("There is no song in queue to toggle autoplay")] });
                 return;
             }
 
             if(getServerData(interaction.guild.id).loop !== LoopType.NO_LOOP)
             {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("You can't toggle autoplay while loop is active")
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
+                interaction.reply({ embeds: [errorEmbed("You can't toggle autoplay while loop is active!")] });
                 return;
             }
             
-            const autoplay = !globals.autoplay;
-            globals.autoplay = autoplay;
+            setGlobalVariable(interaction.guild.id, 'autoplay', !getServerData(interaction.guild.id).autoplay);
 
-            const embed = new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setTitle(`Autoplay is now ${autoplay ? 'enabled' : 'disabled'}`)
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [successEmbed(`Autoplay is now ${autoplay ? 'enabled' : 'disabled'}`)] });
         }
     }

@@ -1,8 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { AudioPlayerStatus } = require('@discordjs/voice');
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { ButtonStyle, ActionRowBuilder } = require('discord.js');
 
-const globals = require('../../global.js');
+const { getServerData, getClient } = require('../../global.js');
+const { createButton } = require('../../helpers/createButton.js');
+const { errorEmbed } = require('../../helpers/embeds.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -25,69 +27,42 @@ module.exports = {
 
         const buttonRow = new ActionRowBuilder()
 
-        const nextPageButton = new ButtonBuilder()
-        .setCustomId('next-button')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('1198248590087307385');
-
-        const previousPageButton = new ButtonBuilder()
-        .setCustomId('previous-button')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('1198248587369386134')
+        const nextPageButton = createButton('next-button', ButtonStyle.Secondary, '1198248590087307385');
+        const previousPageButton = createButton('previous-button', ButtonStyle.Secondary, '1198248587369386134');
 
         buttonRow.addComponents(previousPageButton, nextPageButton);
         
-        const botMember = await guild.members.fetch(globals.client.user.id);
+        const botMember = await guild.members.fetch(getClient().user.id);
         const botVoiceChannel = botMember.voice.channel;
 
         const memberVoiceChannel = interaction.member.voice.channel;
     
         if(botVoiceChannel && memberVoiceChannel && botVoiceChannel.id !== memberVoiceChannel.id)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("You must be in the same voice channel as bot to see queue!")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("You must be in the same voice channel as bot to see queue!")] });
             return;           
         }
 
-        if(globals.player == null || globals.player.state.status !== AudioPlayerStatus.Playing)
+        if(getServerData(interaction.guild.id).player == null || getServerData(interaction.guild.id).player.state.status !== AudioPlayerStatus.Playing)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("There is no song playing")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("There is no song playing")] });
             return;
         }
 
-        const queue = globals.queue;
+        const queue = getServerData(interaction.guild.id).queue;
         let page = interaction.options.getInteger('page') || 1;
         const itemsPerPage = 20;
         const pages = Math.ceil(queue.length / itemsPerPage);
 
         if(queue.length == 0)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("Queue is empty")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("Queue is empty")] });
             return;
         }
         
         if(page > pages || page < 1)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("Invalid page number")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("Invalid page number")] });
             return;
         }
 

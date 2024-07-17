@@ -1,6 +1,7 @@
-const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
+const { SlashCommandBuilder } = require('discord.js');
 
-const globals = require('../../global.js');
+const { getServerData, setGlobalVariable, getClient } = require('../../global.js');
+const { errorEmbed, successEmbed } = require('../../helpers/embeds.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -12,12 +13,7 @@ module.exports = {
         const memberVoiceChannel = interaction.member.voice.channel;
         if(!memberVoiceChannel)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("You need to be in a voice channel to stop the player")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("You need to be in a voice channel to stop the player")] });
             return;
         }
 
@@ -28,51 +24,35 @@ module.exports = {
             return;
         }
 
-        const botMember = await guild.members.fetch(globals.client.user.id);
+        const botMember = await guild.members.fetch(getClient().user.id);
         const botVoiceChannel = botMember.voice.channel;
         
         if(botVoiceChannel && memberVoiceChannel && botVoiceChannel.id !== memberVoiceChannel.id)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("You must be in the same voice channel as bot to stop the player!")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("You must be in the same voice channel as bot to stop the player!")] });
             return;           
         }
 
-        if(globals.player == null)
+        if(getServerData(interaction.guild.id).player == null)
         {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("Player is not active!")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
+            interaction.reply({ embeds: [errorEmbed("Player is not active!")] });
             return;
         }
 
-        globals.player.stop();
-        globals.player = null;
-        globals.resource = null;
-        globals.queue = [];
-        globals.playedSongs = [];
-        globals.firstCommandTimestamp = null;
-        globals.nowPlayingMessage = null;
-        globals.eqEffect = null;
-        globals.loop = globals.LoopType.NO_LOOP;
-        globals.shuffle = false;
-        globals.isSkipped = false;
-        globals.schedulerPlaying = false;
-        globals.timeout = null;
-        globals.autoplay = false;
+        setGlobalVariable('player', null);
+        setGlobalVariable('resource', null);
+        setGlobalVariable('queue', []);
+        setGlobalVariable('playedSongs', []);
+        setGlobalVariable('firstCommandTimestamp', null);
+        setGlobalVariable('nowPlayingMessage', null);
+        setGlobalVariable('eqEffect', null);
+        setGlobalVariable('loop', globals.LoopType.NO_LOOP);
+        setGlobalVariable('shuffle', false);
+        setGlobalVariable('isSkipped', false);
+        setGlobalVariable('schedulerPlaying', false);
+        setGlobalVariable('timeout', null);
+        setGlobalVariable('autoplay', false);
 
-        const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle("Player stopped and queue cleared!")
-        .setTimestamp()
-
-        interaction.reply({ embeds: [embed] });
+        interaction.reply({ embeds: [successEmbed("Player stopped and queue cleared!")] });
     }
 }

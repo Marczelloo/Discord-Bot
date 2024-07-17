@@ -1,7 +1,8 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { AudioPlayerStatus } = require('@discordjs/voice');
 
-const globals = require('../../global.js');
+const { getServerData, setGlobalVariable, getClient} = require('../../global.js');
+const { errorEmbed, successEmbed } = require('../../helpers/embeds.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -18,7 +19,7 @@ module.exports = {
                 return;
             }
             
-            const botMember = await guild.members.fetch(globals.client.user.id);
+            const botMember = await guild.members.fetch(getClient().user.id);
             const botVoiceChannel = botMember.voice.channel;
             
             const memberVoiceChannel = interaction.member.voice.channel;
@@ -34,45 +35,33 @@ module.exports = {
                 return;           
             }
 
-            if(globals.player == null || globals.player.state.status !== AudioPlayerStatus.Playing)
+            if(getServerData(interaction.guild.id).player == null || getServerData(interaction.guild.id).player.state.status !== AudioPlayerStatus.Playing)
             {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("There is no song playing")
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
+                interaction.reply({ embeds: [errorEmbed("There is no song playing")] });
                 return;
             }
 
-            if(globals.queue.length < 2)
+            if(getServerData(interaction.guild.id).queue.length < 2)
             {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("There is no song to shuffle")
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
+                interaction.reply({ embeds: [errorEmbed("There is no songs to shuffle. Minimal amount songs in queue to shuffle: 3")] });
                 return;
             }
 
-            globals.shuffle = !globals.shuffle;       
+            console.log(getServerData(interaction.guild.id).shuffle);
+            const shuffle = !getServerData(interaction.guild.id).shuffle;
+            console.log(shuffle);
+            setGlobalVariable(interaction.guild.id, 'shuffle', shuffle);
 
-            if(globals.shuffle)
+            if(getServerData(interaction.guild.id).shuffle)
             {
-                globals.originalQueue = globals.queue;
-                globals.queue = globals.queue.sort(() => Math.random() - 0.5);
+                setGlobalVariable(interaction.guild.id, 'originalQueue', getServerData(interaction.guild.id).queue);
+                setGlobalVariable(interaction.guild.id, 'queue', getServerData(interaction.guild.id).queue.sort(() => Math.random() - 0.5));
             }
             else
             {
-                globals.queue = globals.originalQueue;
+                setGlobalVariable(interaction.guild.id, 'queue', getServerData(interaction.guild.id).originalQueue);
             }
             
-            const embed = new EmbedBuilder()
-            .setColor(0x00ff00)
-            .setTitle(`Shuffle ${globals.shuffle ? 'enabled' : 'disabled'}`)
-            .setTimestamp()
-
-            await interaction.reply({ embeds: [embed] });
+            await interaction.reply({ embeds: [successEmbed(`Shuffle ${getServerData(interaction.guild.id).shuffle ? 'enabled' : 'disabled'}`)] });
         }
 }

@@ -1,4 +1,4 @@
-const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require("../commands/music/eqFunctions");
+const { bassBoost, bassBoostV2, earrape, nightcore, slowReverb, eightBit, dolbyRetardos, inverted, toiletAtClub } = require("./eqFunctions");
 
 module.exports = {
    applyEqualizer: async function() {

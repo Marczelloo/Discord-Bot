@@ -2,9 +2,6 @@ const { SlashCommandBuilder, EmbedBuilder } = require('@discordjs/builders');
 const fs = require('fs');
 const path = require('path');
 
-const globals = require('../../global.js');
-const { json } = require('stream/consumers');
-
 module.exports = {
     data: new SlashCommandBuilder()
     .setName('schedulers')
