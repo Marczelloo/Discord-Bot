@@ -27,9 +27,9 @@ module.exports = {
             await obtainSpotifyToken(interaction);
          
          if(playlist)
-            fetchSpotifyPlaylist(url, interaction);
+            await fetchSpotifyPlaylist(url, interaction);
          else
-            fetchSpotifySong(url, interaction);
+            await fetchSpotifySong(url, interaction);
 
       }
       else if(isYoutubeUrl)

@@ -1,4 +1,5 @@
-const { setGlobalVariable, addToQueue } = require("../global");
+const { setGlobalVariable, addToQueue, getServerData } = require("../global");
+const { errorEmbed, successEmbed } = require("./embeds");
 
 module.exports = {
    fetchSpotifyPlaylist: async function(url, interaction) {
@@ -7,9 +8,11 @@ module.exports = {
 
       try
       {
+         const token = getServerData(interaction.guildId).spotify_token;
+
          const response = await fetch(apiUrl, {
             headers: {
-                  'Authorization': `Bearer ${globals.spotify_token}`
+               'Authorization': `Bearer ${token}`
             }
          });
 

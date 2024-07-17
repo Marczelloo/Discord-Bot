@@ -20,7 +20,7 @@ async function downloadYtdl(interaction,
       let stream;
 
       if(getServerData(interaction.guild.id).queue[0].url.includes('spotify'))
-         stream = ytdl(getServerData(interaction.guild.id).queue[0].yt_udl, { 
+         stream = ytdl(getServerData(interaction.guild.id).queue[0].yt_url, { 
             filter: 'audioonly', 
             quality: 'highestaudio' 
          });
@@ -31,7 +31,7 @@ async function downloadYtdl(interaction,
          });
 
       stream.on('error', error => {
-         console.error(`Stream error: ${error.message}`);
+         console.error(`Stream error test: ${error.message}`);
       });
 
       const writer = stream.pipe(fs.createWriteStream(outputFilePath));

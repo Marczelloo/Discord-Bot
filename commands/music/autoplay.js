@@ -44,7 +44,7 @@ module.exports = {
                 return;           
             }
 
-            const queue = globals.queue;
+            const queue = globals.getServerData(interaction.guild.id).queue;
             if(queue == null || queue.length === 0)
             {
                 const embed = new EmbedBuilder()
@@ -56,7 +56,7 @@ module.exports = {
                 return;
             }
 
-            if(globals.loop !== globals.LoopType.NO_LOOP)
+            if(getServerData(interaction.guild.id).loop !== LoopType.NO_LOOP)
             {
                 const embed = new EmbedBuilder()
                 .setColor(0xff0000)

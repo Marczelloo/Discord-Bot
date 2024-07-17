@@ -1,8 +1,0 @@
-{
-   "token": "your-discord-token",
-   "clientId": "your-client-id",
-   "guildId": "your-guild-id",
-   "spotify_clientID": "your_spotify_cleintID",
-   "spotify_clientSecret": "your_spotify_client_secret"
- }
- 

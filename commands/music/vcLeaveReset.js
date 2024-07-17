@@ -1,37 +1,28 @@
 const fs = require('fs');
 const { AudioPlayerStatus } = require('@discordjs/voice');
 
-const globals = require('../../global.js');
+const { getServerData, clearGlobalVariables } = require('../../global.js');
+const path = require('path');
 
-function vcLeaveReset()
+function vcLeaveReset(guildId)
 {
-    if(!globals.player == null)
+    if(!getServerData(guildId).player == null)
     {
-        globals.player.stop();
+        getServerData(guildId).player.stop();
     }
-  
-    globals.player = null;
-    globals.resource = null;
-    globals.queue = [];
-    globals.playedSongs = [];
-    globals.firstCommandTimestamp = null;
-    globals.nowPlayingMessage = null;
-    globals.eqEffect = null;
-    globals.loop = globals.LoopType.NO_LOOP;
-    globals.shuffle = false;
-    globals.isSkipped = false;
-    globals.schedulerPlaying = false;
-    globals.timeout = null;
-    globals.autoplay = false;
+
+    clearGlobalVariables(guildId);
+
+    const filePath = path.resolve(__dirname, "../../temp/output_" + guildId + ".ogg");
+    const filePathEQ = path.resolve(__dirname, "../../temp/outputEQ_" + guildId + ".ogg");
     
-    
-    fs.access(__dirname + "/output.ogg", fs.F_OK, (err) => {
+    fs.access(filePath, fs.F_OK, (err) => {
         if(err) {
             console.error(err);
             return;
         }
 
-        fs.unlink(__dirname + "/output.ogg", (err) => {
+        fs.unlink(filePath, (err) => {
             if(err) {
                 console.error(err);
                 return;
@@ -40,6 +31,22 @@ function vcLeaveReset()
             console.log("Successfully deleted output.ogg");
         });
     });
+
+    fs.access(filePathEQ, fs.F_OK, (err) => {
+        if(err) {
+            console.error(err);
+            return;
+        }
+
+        fs.unlink(filePathEQ, (err) => {
+            if(err) {
+                console.error(err);
+                return;
+            }
+
+            console.log("Successfully deleted outputEQ.ogg");
+        });
+    })
 
 }
 

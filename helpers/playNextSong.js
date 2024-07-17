@@ -1,4 +1,4 @@
-const { ytsr } = require("ytsr");
+const ytsr = require('ytsr');
 const { setSongInQueue, getServerData, setGlobalVariable } = require("../global");
 const { formatTime } = require("./formatTime");
 const { playerEmbed } = require("./embeds");
@@ -30,12 +30,15 @@ async function playNextSong(interaction,
 
       if(getServerData(interaction.guild.id).queue[0].url.includes("spotify"))
       {
-         const video = await ytsr(getServerData(interaction.guild.id).queue[0].title + " " + getServerData(interaction.guild.id).queue[0].artist, { limit: 1})[0];
+         const video = await ytsr(getServerData(interaction.guild.id).queue[0].title + " " + getServerData(interaction.guild.id).queue[0].artist, { limit: 1});
+         const videoInfo = video.items[0];
+         
+         console.log(videoInfo);
       
          const song = getServerData(interaction.guild.id).queue[0];
-         song.yt_url = video.url;
-         song.length = video.duration;
-         song.artist_url = video.author.bestAvatar.url;
+         song.yt_url = videoInfo.url;
+         song.length = videoInfo.duration;
+         song.artist_url = videoInfo.author.bestAvatar.url;
 
          setSongInQueue(interaction.guild.id, 0, song, "queue");
       }
@@ -45,7 +48,7 @@ async function playNextSong(interaction,
 
       const nowPlayingEmbed = playerEmbed(song.title, song.url, song.image, song.artist, song.artist_url);
 
-      outputFilePath = __dirname + "/../temp/" + "output.ogg";
+      outputFilePath = __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg";
 
       if(getServerData(interaction.guild.id).ageRestricted)
          downloadYtdlp(interaction, song.url, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);

@@ -12,8 +12,8 @@ module.exports = {
       })
 
       getServerData(interaction.guild.id).commandChannel.messages.fetch({ limit: 100})
-      .then(async message => {
-         const botMessages = await messages.filter(m => m.author.bot && (message.createdTimestamp > getServerData(interaction.guild.id).firstCommandTimestamp));
+      .then(async messages => {
+         const botMessages = await messages.filter(m => m.author.bot && (messages.createdTimestamp > getServerData(interaction.guild.id).firstCommandTimestamp));
 
          getServerData(interaction.guild.id).commandChannel.bulkDelete(botMessages, true)
          .then(() => {
@@ -33,9 +33,9 @@ module.exports = {
          {
             console.log("Disconnecting from voice channel after timeout");
 
-            connection.disconent();
+            connection.disconnect();
             clearGlobalVariables(interaction.guild.id);
          }
-      }), 300000);
+      }, 300000));
    }
 }

@@ -1,7 +1,8 @@
 const { setGlobalVariable, unshiftQueue, getServerData, shiftQueue } = require("../global");
+const { deleteMessages } = require("./deleteMessages");
 const { handleIdleLoop } = require("./handleIdleLoop");
 
-function isSkipped(interaction) {
+function isSkipped(interaction, connection) {
    const { playNextSong } = require("./playNextSong");
 
    console.log("Player idle");

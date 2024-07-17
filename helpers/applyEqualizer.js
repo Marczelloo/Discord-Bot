@@ -8,40 +8,32 @@ module.exports = {
       {
             case 'bassboost':
                await bassBoost();
-               outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
+               outputFilePath = __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg";
                break;
             case 'bass-v2':
                await bassBoostV2();
-               outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
-               break;
+               outputFilePath = __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg";               break;
             case 'earrape':
                await earrape();
-               outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
-               break;
+               outputFilePath = __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg";               break;
             case 'nightcore':
                await nightcore();
-               outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
-               break;
+               outputFilePath = __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg";               break;
             case 'slowReverb':
                await slowReverb();
-               outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
-               break;
+               outputFilePath = __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg";               break;
             case 'eightBit':
                await eightBit();
-               outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
-               break;
+               outputFilePath = __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg";               break;
             case "dolbyRetardos":
                await dolbyRetardos();
-               outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
-               break;
+               outputFilePath = __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg";               break;
             case "inverted":
                await inverted();
-               outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
-               break;
+               outputFilePath = __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg";               break;
             case "toiletAtClub":
                await toiletAtClub();
-               outputFilePath = path.resolve(__dirname, "eqOutput.ogg");
-               break;
+               outputFilePath = __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg";               break;
             default:
                break;
       }

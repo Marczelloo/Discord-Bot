@@ -1,6 +1,10 @@
+require('dotenv').config();
+
 const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
 
-const { token } = require('./config.json');
+const token = process.env.TOKEN;
+
+const { setGlobalVariable } = require('./global.js');
 const globals = require('./global.js');
 
 const fs = require('fs');
@@ -10,7 +14,6 @@ const cron = require('node-cron');
 const vcLeaveReset = require('./commands/music/vcLeaveReset.js');
 const { schedulePlay }  = require('./commands/music/playScheduler.js');
 
-// Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds, 
 	GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, 
 	GatewayIntentBits.GuildPresences, 
@@ -70,33 +73,31 @@ for(const file of eventsFiles){
 }
 
 client.on('voiceStateUpdate', (oldState, newState) => {
-	
-	if(oldState.member.user.id === client.user.id && newState.channelId === null)
-	{
-		vcLeaveReset();
+	if (oldState.member.user.id === client.user.id && newState.channelId === null) {
+		console.log('Bot left the voice channel');
+		const guild = newState.guild;
+		vcLeaveReset(guild.id);
 	}
-})
+});
 
 client.on('voiceStateUpdate', (oldState, newState) => {
-  const oldChannel = oldState.channel;
-  const newChannel = newState.channel;
+	const oldChannel = oldState.channel;
+	const newChannel = newState.channel;
+	const guild = newState.guild;
 
-  if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
-    const oldMembers = oldChannel.members.size;
-    const newMembers = newChannel.members.size;
+	if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
+		const oldMembers = oldChannel.members.size;
+		const newMembers = newChannel.members.size;
 
-    if (oldMembers !== newMembers) {
-		if(newMembers === 1)
-		{
+		if (oldMembers !== newMembers && newMembers === 1) {
+			console.log('Bot is alone in the voice channel');
 			setTimeout(() => {
-				if(newChannel.members.size === 1)
-				{
-					vcLeaveReset();
+				if (newChannel.members.size === 1) {
+					vcLeaveReset(guild.id);
 				}
 			}, 60000);
 		}
 	}
-  }
 });
 
 
@@ -109,7 +110,7 @@ try
 	{
 		if(data.guildId === 'default')
 		{
-			globals.schedulers = data.schedulers;
+			setGlobalVariable(data.guild.id, 'schedulers', data.schedulers);
 		}
 	}
 }

@@ -30,7 +30,7 @@ async function handlePlayerIdle(interaction,
             setGlobalVariable(interaction.guild.id, "schedulerPlaying", false);
             clearTimeout(getServerData(interaction.guild.id).timeout);
             console.log("Timeout for clearing variables and disconnecting stopped");
-            playNextSong(interaction, connection);
+            playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);
             return;
          }
 
@@ -53,10 +53,12 @@ async function handlePlayerIdle(interaction,
          }
          else
          {
+            if(getServerData(interaction.guild.id).queue.length === 0) return;
+
             console.log("Playing first song");
             clearTimeout(getServerData(interaction.guild.id).timeout);
             console.log("Timeout for clearing variables and disconnecting stopped");
-            playNextSong(interaction, connection);
+            playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);
          }
       });
    }
