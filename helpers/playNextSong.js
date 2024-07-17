@@ -1,22 +1,25 @@
-const ytsr = require("ytsr");
-const { setSongInQueue, getServerData } = require("../global");
-const formatTime = require("./formatTime");
+const { ytsr } = require("ytsr");
+const { setSongInQueue, getServerData, setGlobalVariable } = require("../global");
+const { formatTime } = require("./formatTime");
 const { playerEmbed } = require("./embeds");
-const play = require("./play");
-const { VoiceChannel } = require("discord.js");
 const { nowPlayingEmbedFields } = require("./nowPlayingEmbedFields");
+const { downloadYtdlp } = require("./downloadYtdlp");
+const { downloadYtdl } = require("./downloadYtdl");
 
-module.exports = {
-   playNextSong: async function(interaction, connection) {
-      let outputFilePath;
+async function playNextSong(interaction, 
+   connection,
+   pausedRow,
+   playingRow,
+   disabledButtons) {
+   let outputFilePath;
 
-      if(getServerData(interaction.guild.id).queue == 0)
+      if(getServerData(interaction.guild.id).queue.length == 0)
       {
          setGlobalVariable(interaction.guild.id, "player", getServerData(interaction.guild.id).player.stop());
       }
 
       let formattedTime;
-      if(getServerData(interaction.guild.id).queue[0].toString().includes(":"))
+      if(getServerData(interaction.guild.id).queue[0].length.toString().includes(":"))
       {
          formattedTime = getServerData(interaction.guild.id).queue[0].length;
       }
@@ -42,9 +45,12 @@ module.exports = {
 
       const nowPlayingEmbed = playerEmbed(song.title, song.url, song.image, song.artist, song.artist_url);
 
-      if(getServerData(interaction.guidl.id).ageRestricted)
-         downloadYtdlp(interaction, song.url, outputFilePath, connection);
+      outputFilePath = __dirname + "/../temp/" + "output.ogg";
+
+      if(getServerData(interaction.guild.id).ageRestricted)
+         downloadYtdlp(interaction, song.url, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
       else
-         downloadYtdlp(interaction, song.url, outputFilePath, connection);
-   }
+         downloadYtdl(interaction, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
 }
+
+exports.playNextSong = playNextSong;

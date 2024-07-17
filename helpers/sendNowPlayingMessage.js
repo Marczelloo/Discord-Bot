@@ -2,7 +2,11 @@ const { AudioPlayerStatus } = require("@discordjs/voice");
 const { getServerData, setGlobalVariable } = require("../global");
 
 module.exports = {
-   sendNowPlayingMessage: async function(interaction, nowPlayingEmbed, playingRow, pausedRow) {
+   sendNowPlayingMessage: async function(interaction,   
+      nowPlayingEmbed, 
+      playingRow, 
+      pausedRow) {
+
       if(getServerData(interaction.guild.id).player.AudioPlayerStatus === AudioPlayerStatus.Paused)
       {
          console.log("Sending paused message");

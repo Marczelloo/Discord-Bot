@@ -23,7 +23,7 @@ module.exports = {
          .setTitle(title)
          .setTimestamp()
    },
-   songEmed: function(song) {
+   songEmbed: function(song) {
       return new EmbedBuilder()
       .setColor(0x00ff00)
       .setAuthor({ name: 'Song added to queue:' })

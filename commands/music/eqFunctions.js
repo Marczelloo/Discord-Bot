@@ -2,8 +2,6 @@ const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const path = require('path');
 
-const globals = require('../../global.js');
-
 async function bassBoost() {
     const input = path.join(__dirname, "output.ogg");
     const output = path.join(__dirname, "eqOutput.ogg");

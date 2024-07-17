@@ -1,7 +1,17 @@
 const { getServerData } = require("../global");
+const { rewind } = require("./buttonsFunctionality/rewind");
+const { skip } = require("./buttonsFunctionality/skip");
+const { pause } = require("./buttonsFunctionality/pause");
+const { resume } = require("./buttonsFunctionality/resume");
+const { loop } = require("./buttonsFunctionality/loop");
+const { shuffle } = require("./buttonsFunctionality/shuffle");
 
 module.exports = {
-   buttonFunctionality: async function(interaction, button) {
+   buttonFunctionality: async function(interaction, nowPlayingEmbedFields, 
+   nowPlayingEmbed,
+   playingRow,
+   pausedRow,
+   disabledButtons) {
       const filter = () => true;
       try
       {
@@ -13,7 +23,7 @@ module.exports = {
          catch(error)
          {
             console.error("Error creating collector: ");
-            console.error(e);
+            console.error(error);
 
             collector = getServerData(interaction.guild.id).commandChannel.createMessageComponentCollector({ filter, time: null });
          }
@@ -22,22 +32,22 @@ module.exports = {
             switch(confirmation.customId)
             {
                case 'rewind-button':
-                  rewind();
+                  rewind(interaction, confirmation, collector, nowPlayingEmbedFields, nowPlayingEmbed, disabledButtons);
                   break;
                case 'skip-button':
-                  skip();
+                  skip(interaction, confirmation, collector, nowPlayingEmbedFields, nowPlayingEmbed, disabledButtons);
                   break;
                case 'pause-button':
-                  pause();
+                  pause(interaction, confirmation, nowPlayingEmbedFields, nowPlayingEmbed, pausedRow);
                   break;
                case 'resume-button':
-                  resume();
+                  resume(interaction, confirmation, nowPlayingEmbedFields, nowPlayingEmbed, playingRow);
                   break;
                case 'loop-button':
-                  loop();
+                  loop(interaction, confirmation, nowPlayingEmbedFields, nowPlayingEmbed);
                   break;
                case 'shuffle-button':
-                  shuffle();
+                  shuffle(interaction, confirmation, nowPlayingEmbedFields, nowPlayingEmbed);
                   break;
                default:
                   console.error("Invalid customId");
@@ -47,7 +57,7 @@ module.exports = {
       }
       catch(error)
       {
-         console.error(error);
+         console.error("Interaction collector error: " + error);
       }
    }
 }

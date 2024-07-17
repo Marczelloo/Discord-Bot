@@ -1,5 +1,5 @@
 const { setGlobalVariable } = require("../global");
-const errorEmbed = require("./errorEmbed");
+const { errorEmbed } = require("./embeds");
 
 module.exports = {
    obtainSpotifyToken: async function(interaction) {

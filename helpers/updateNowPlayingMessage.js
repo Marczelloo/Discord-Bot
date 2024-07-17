@@ -2,9 +2,15 @@ const { AudioPlayerStatus } = require("@discordjs/voice");
 const { getServerData, setGlobalVariable } = require("../global");
 
 module.exports = {
-   updateNowPlayingMessage: async function(interaction, nowPlayingEmbed, playingRow, pausedRow) {
+   updateNowPlayingMessage: async function(interaction,
+      nowPlayingEmbed, 
+      playingRow, 
+      pausedRow) {
+         
+      console.log(playingRow);
+      console.log(pausedRow);
       console.log("Now playing message exists, updating it");
-      await interaction.channel.messages.fetch(globals.nowPlayingMessage)
+      await interaction.channel.messages.fetch(getServerData(interaction.guild.id).nowPlayingMessage)
       .then(async message => {
          if (message) message.delete().catch(console.error);
 
@@ -36,7 +42,7 @@ module.exports = {
                   setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
                   setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
                })
-               .cactch(console.error))
+               .catch(console.error))
             }
          }
          catch(error)
@@ -49,6 +55,12 @@ module.exports = {
             {
                console.error("Error updating now playing message: " + error);
             }
+         }
+      })
+      .catch(error => {
+         if(error.code === 10008)
+         {
+            console.error("The message has already been deleted or does not exist.");
          }
       })
       .catch(console.error);

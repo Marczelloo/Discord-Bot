@@ -1,5 +1,10 @@
 const { getServerData } = require("../global");
-const errorEmbed = require("./errorEmbed");
+const { errorEmbed } = require("./embeds");
+const { fetchSpotifyPlaylist } = require("./fetchSpotifyPlaylist");
+const { fetchSpotifySong } = require("./fetchSpotifySong");
+const { fetchYoutubePlaylist } = require("./fetchYoutubePlaylist");
+const { fetchYoutubeSong } = require("./fetchYoutubeSong");
+const { obtainSpotifyToken } = require("./obtainSpotifyToken");
 
 module.exports = {
    processUrlSong: async function(url, interaction) {
@@ -51,7 +56,9 @@ module.exports = {
             }
          }
          else
-            fetchYoutubeSong(url, interaction);
+         {
+            await fetchYoutubeSong(url, interaction);
+         }
          
       }
       else 
