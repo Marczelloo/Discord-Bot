@@ -1,5 +1,6 @@
 const path = require('path');
 const util = require('util');
+const Log = require('./fancyLogs/log');
 
 async function downloadYtdlp(interaction, 
    url, 
@@ -24,7 +25,7 @@ async function downloadYtdlp(interaction,
       const command = `"${ytdlpPath}" -x --audio-format vorbis -o "${outputPath}" ${url}`;
       
       const { stdout, stderr } = await exec(command);
-      console.log(`Audio downloaded successfully: ${stdout}`);
+      Log.info(`Downloading audio:`, stdout, interaction.guild.id, interaction.guild.name);
 
       if (stdout.trim() !== "") 
       {
@@ -32,12 +33,12 @@ async function downloadYtdlp(interaction,
       } 
       else 
       {
-         console.log("No output from download command, skipping play.");
+         Log.error(`Error downloading audio: ${stderr}`, null, interaction.guild.id, interaction.guild.name);
       }
    } 
    catch (error) 
    {
-      console.error(`Error executing command: ${error}`);
+      Log.error("Error downloading audio: ", error, interaction.guild.id, interaction.guild.name);
       await interaction.editReply({ embeds: [errorEmbed("Error downloading audio, please try again later")] });
       shiftQueue(interaction.guild.id, "queue");
       playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);

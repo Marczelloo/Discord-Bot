@@ -5,6 +5,7 @@ const { pause } = require("./buttonsFunctionality/pause");
 const { resume } = require("./buttonsFunctionality/resume");
 const { loop } = require("./buttonsFunctionality/loop");
 const { shuffle } = require("./buttonsFunctionality/shuffle");
+const Log = require("./fancyLogs/log");
 
 module.exports = {
    buttonFunctionality: async function(interaction, nowPlayingEmbedFields, 
@@ -22,8 +23,7 @@ module.exports = {
          }
          catch(error)
          {
-            console.error("Error creating collector: ");
-            console.error(error);
+            Log.error("Error creating collector: ", error, interaction.guild.id, interaction.guild.name);
 
             collector = getServerData(interaction.guild.id).commandChannel.createMessageComponentCollector({ filter, time: null });
          }
@@ -50,14 +50,14 @@ module.exports = {
                   shuffle(interaction, confirmation, nowPlayingEmbedFields, nowPlayingEmbed);
                   break;
                default:
-                  console.error("Invalid customId");
+                  Log.error("Invalid customId", null, interaction.guild.id, interaction.guild.name);
                   break;
             }
          })
       }
       catch(error)
       {
-         console.error("Interaction collector error: " + error);
+         Log.error("Interaction collector error: ", error, interaction.guild.id, interaction.guild.name);
       }
    }
 }

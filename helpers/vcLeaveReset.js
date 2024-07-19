@@ -3,6 +3,7 @@ const { AudioPlayerStatus } = require('@discordjs/voice');
 
 const { getServerData, clearGlobalVariables } = require('../global.js');
 const path = require('path');
+const Log = require('./fancyLogs/log.js');
 
 function vcLeaveReset(guildId)
 {
@@ -13,38 +14,38 @@ function vcLeaveReset(guildId)
 
     clearGlobalVariables(guildId);
 
-    const filePath = path.resolve(__dirname, "../../temp/output_" + guildId + ".ogg");
-    const filePathEQ = path.resolve(__dirname, "../../temp/outputEQ_" + guildId + ".ogg");
+    const filePath = path.resolve(__dirname, "../temp/output_" + guildId + ".ogg");
+    const filePathEQ = path.resolve(__dirname, "../temp/outputEQ_" + guildId + ".ogg");
     
     fs.access(filePath, fs.F_OK, (err) => {
         if(err) {
-            console.error(err);
+            Log.error("Error output.ogg does not exist", err, guildId);
             return;
         }
 
         fs.unlink(filePath, (err) => {
             if(err) {
-                console.error(err);
+                Log.error("Error deleting output.ogg", err, guildId);
                 return;
             }
 
-            console.log("Successfully deleted output.ogg");
+            Log.success("Successfully deleted output.ogg", null, guildId);
         });
     });
 
     fs.access(filePathEQ, fs.F_OK, (err) => {
         if(err) {
-            console.error(err);
+            Log.error("Error outputEQ.ogg does noe exist", err, guildId);
             return;
         }
 
         fs.unlink(filePathEQ, (err) => {
             if(err) {
-                console.error(err);
+                Log.error("Error deleting outputEQ.ogg", err, guildId);
                 return;
             }
 
-            console.log("Successfully deleted outputEQ.ogg");
+            Log.success("Successfully deleted outputEQ.ogg", null, guildId);
         });
     })
 

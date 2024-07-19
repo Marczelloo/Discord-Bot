@@ -5,6 +5,7 @@ const { setGlobalVariable, addToQueue } = require("../global");
 
 module.exports = {
    processTitleSong: async function(title, interaction) {
+      Log.info("Processing song by name", null, interaction.guild.id, interaction.guild.name);
       const searchResults = await ytsr(title, { limit: 1});
       const video = searchResults.items[0];
 
@@ -17,13 +18,13 @@ module.exports = {
 
          if(!video)
          {
-            console.log("No search results found for the song by name");
+            Log.error("No search results found for the song by name", null, interaction.guild.id, interaction.guild.name);
             await interaction.editReply({ embeds: [ errorEmbed("No search results found for the song")]});
          }
 
          if(video.live)
          {
-            console.log("Live video found, skipping");
+            Log.warning("Live video found, skipping", null, interaction.guild.id, interaction.guild.name);
             await interaction.editReply({ embeds: [ errorEmbed("You can't play live content")]});
             return;
          }
@@ -40,13 +41,14 @@ module.exports = {
    
             addToQueue(interaction.guildId, newSong, "queue");
    
-            console.log("Adding youtube song to queue by name");
+
+            Log.info("Added youtube song to queue by name", null, interaction.guild.id, interaction.guild.name);
    
             await interaction.editReply({ embeds: [ songEmbed(newSong)]})
          }
       })
       .catch(async error => {
-         console.error("Error fetching youtube song by name: " + error);
+         Log.error("Error fetching youtube song by name: " + error, null, interaction.guild.id, interaction.guild.name);
          await interaction.editReply({ embeds: [ errorEmbed("Error fetching youtube song, please check song name or try again later")]});
          return;
       });

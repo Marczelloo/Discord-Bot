@@ -1,5 +1,6 @@
 const { AudioPlayerStatus } = require("@discordjs/voice");
-const { getServerData, setGlobalVariable, clearGlobalVariables } = require("../global")
+const { getServerData, setGlobalVariable, clearGlobalVariables } = require("../global");
+const Log = require("./fancyLogs/log");
 
 module.exports = {
    deleteMessages: async function(interaction, connection) {
@@ -8,7 +9,7 @@ module.exports = {
          if(message) message.delete();
       })
       .catch(error => {
-         console.error("Error deleting message: " + error);
+         Log.error("Error deleting message: ", error, interaction.guild.id, interaction.guild.name);
       })
 
       getServerData(interaction.guild.id).commandChannel.messages.fetch({ limit: 100})
@@ -17,21 +18,21 @@ module.exports = {
 
          getServerData(interaction.guild.id).commandChannel.bulkDelete(botMessages, true)
          .then(() => {
-            console.log("Messages deleted");
+            Log.info("Messages deleted", null, interaction.guild.id, interaction.guild.name);
          })
          .catch(error => {
-            console.error("Error deleting messages: " + error);
+            Log.error("Error deleting messages: ", error, interaction.guild.id, interaction.guild.name);
          })
       })
       .catch(error => {
-         console.error("Error fetching messages: " + error);
+         Log.error("Error fetching messages: ", error, interaction.guild.id, interaction.guild.name);
       })
 
       setGlobalVariable(interaction.guild.id, "timeout", setTimeout(() => {
-         console.log("End of timeout");
+         Log.info("Timeout reached", null, interaction.guild.id, interaction.guild.name);
          if(getServerData(interaction.guild.id).queue.length === 0 && getServerData(interaction.guild.id).player.state.status === AudioPlayerStatus.Idle)
          {
-            console.log("Disconnecting from voice channel after timeout");
+            Log.info("Disconnecting from voice channel after timeout", null, interaction.guild.id, interaction.guild.name);
 
             connection.disconnect();
             clearGlobalVariables(interaction.guild.id);

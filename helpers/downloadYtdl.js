@@ -3,6 +3,7 @@ const { shiftQueue, getServerData } = require("../global");
 const { errorEmbed } = require("./embeds");
 const { play } = require("./play");
 const fs = require('fs');
+const Log = require("./fancyLogs/log");
 
 async function downloadYtdl(interaction, 
    outputFilePath, 
@@ -16,7 +17,7 @@ async function downloadYtdl(interaction,
 
    try
    {
-      console.log("Downloading song");
+      Log.info("Proceding to download song", null, interaction.guild.id, interaction.guild.name);
       let stream;
 
       if(getServerData(interaction.guild.id).queue[0].url.includes('spotify'))
@@ -31,7 +32,7 @@ async function downloadYtdl(interaction,
          });
 
       stream.on('error', error => {
-         console.error(`Stream error test: ${error.message}`);
+         Log.error("Stream error: ", error, interaction.guild.id, interaction.guild.name);
       });
 
       const writer = stream.pipe(fs.createWriteStream(outputFilePath));
@@ -45,23 +46,21 @@ async function downloadYtdl(interaction,
       stream.on('data', (chunk) => {
             downloadedSize += chunk.length;
             const progress = (downloadedSize / totalSize) * 100;
-            process.stdout.clearLine();
-            process.stdout.cursorTo(0);
-            process.stdout.write(`Downloading: ${progress.toFixed(2)}%`);
+            Log.progress("Downloading", progress, interaction.guild.id, interaction.guild.name);
       });
 
       writer.on('finish', () => {
-         console.log("\nAudio downloaded successfully");
+         Log.success("Audio downloaded successfully", null, interaction.guild.id, interaction.guild.name);
          play(interaction, outputFilePath, connection, nowPlayingEmbed, nowPlayingEmbedFields, playingRow, pausedRow, disabledButtons);
      });
 
      writer.on('error', error => {
-      console.error(`Write stream error: ${error.message}`);
+         Log.error("Write stream error: ", error, interaction.guild.id, interaction.guild.name);
       });
    }
    catch(error)
    {
-      console.error("Error downloading audio: " + error);
+      Log.error("Error downloading audio: ", error, interaction.guild.id, interaction.guild.name);
       await interaction.editReply({ embeds: [ errorEmbed("Error downloading audio")] });
       shiftQueue(interaction.guild.id, "queue");
       playNextSong(interaction, connection);

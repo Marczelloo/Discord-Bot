@@ -1,5 +1,6 @@
 const { setGlobalVariable, addToQueue, getServerData } = require("../global");
 const { errorEmbed, successEmbed } = require("./embeds");
+const Log = require("./fancyLogs/log");
 
 module.exports = {
    fetchSpotifyPlaylist: async function(url, interaction) {
@@ -8,6 +9,7 @@ module.exports = {
 
       try
       {
+         Log.info("Fetching spotify playlist", null, interaction.guild.id, interaction.guild.name);
          const token = getServerData(interaction.guildId).spotify_token;
 
          const response = await fetch(apiUrl, {
@@ -37,13 +39,13 @@ module.exports = {
             addToQueue(interaction.guildId, newSong, "queue");
          }));
 
-         console.log("Adding spotify playlist to queue");
+         Log.success("Added spotify playlist to queue", null, interaction.guild.id, interaction.guild.name);
 
          await interaction.editReply({ embeds: [ successEmbed("Songs are proccessing and they will be added in a while.") ]});
       }
       catch(error)
       {
-         console.error("Error fetching spotify playlist: " + error);
+         Log.error("Error fetching spotify playlist: " + error, null, interaction.guild.id, interaction.guild.name);
          await interaction.editReply({ embeds: [ errorEmbed("Error fetching spotify playlist, please check playlist link or try again later")]});
          return;
       }

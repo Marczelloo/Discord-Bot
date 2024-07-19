@@ -1,4 +1,5 @@
-const { getServerData, unshiftQueue, setGlobalVariable } = require("../../global")
+const { getServerData, unshiftQueue, setGlobalVariable } = require("../../global");
+const Log = require("../fancyLogs/log");
 
 module.exports = {
    rewind: async function(interaction, 
@@ -6,11 +7,12 @@ module.exports = {
       collector, 
       nowPlayingEmbedFields, 
       nowPlayingEmbed,
-      disabledButtons)
-   {
+      disabledButtons) {
+      Log.info("Rewind button clicked", null, interaction.guild.id, interaction.guild.name);
+
       if(getServerData(interaction.guild.id).playedSongs.length === 0)
       {
-         console.log("Rewind button clicked. No previous songs in queue, rewinding to the beginning of the song");
+         Log.info("No previous songs in queue, rewinding to the beginning of the song", null, interaction.guild.id, interaction.guild.name);
          unshiftQueue(interaction.guild.id, "queue");
          collector.stop();
          getServerData(interaction.guild.id).player.stop();
@@ -25,7 +27,7 @@ module.exports = {
          }
          catch(error)
          {
-            console.error("Error updating message: " + error);
+            Log.error("Rewind Button Error updating message: ", error, interaction.guild.id, interaction.guild.name);
 
             await getServerData(interaction.guild.id).playerMessage.edit({
                embeds: [ nowPlayingEmbed],
@@ -37,10 +39,10 @@ module.exports = {
          return;
       }
 
-      console.log("Rewind button clicked. Rewinding to the previous song");
       setGlobalVariable(interaction.guild.id, "playEarlier", true);
       getServerData(interaction.guild.id).player.stop();
       collector.stop();
+      Log.info("Playing previous song", null, interaction.guild.id, interaction.guild.name);
 
       try
       {
@@ -52,7 +54,7 @@ module.exports = {
       }
       catch(error)
       {
-         console.error("Error updating message: " + error);
+         Log.error("Rewind Button Error updating message: ", error, interaction.guild.id, interaction.guild.name);   
 
          await getServerData(interaction.guild.id).playerMessage.edit({
             embeds: [ nowPlayingEmbed],

@@ -1,5 +1,6 @@
 const { AudioPlayerStatus } = require("@discordjs/voice");
 const { getServerData, setGlobalVariable } = require("../global");
+const Log = require("./fancyLogs/log");
 
 module.exports = {
    updateNowPlayingMessage: async function(interaction,
@@ -7,12 +8,19 @@ module.exports = {
       playingRow, 
       pausedRow) {
          
-      console.log(playingRow);
-      console.log(pausedRow);
-      console.log("Now playing message exists, updating it");
+      Log.info("Updating now playing message", null, interaction.guild.id, interaction.guild.name);
       await interaction.channel.messages.fetch(getServerData(interaction.guild.id).nowPlayingMessage)
       .then(async message => {
-         if (message) message.delete().catch(console.error);
+         if (message) message.delete().catch(error => {
+            if(error.code === 10008)
+            {
+               Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
+            }
+            else
+            {
+               Log.error("Error deleting now playing message: ", error, interaction.guild.id, interaction.guild.name);
+            }
+         });
 
          try
          {
@@ -25,10 +33,13 @@ module.exports = {
                   position: 'end'
                })
                .then(nowPlayingMessage => {
+                  Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
                   setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
                   setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
                })
-               .cactch(console.error))
+               .cactch(error => {
+                  Log.error("Error updating paused message: ", error, interaction.guild.id, interaction.guild.name);
+               }))
             }
             else
             {
@@ -39,30 +50,35 @@ module.exports = {
                   position: 'end'
                })
                .then(nowPlayingMessage => {
+                  Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
                   setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
                   setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
                })
-               .catch(console.error))
+               .catch(error => {
+                  Log.error("Error updating playing message: ", error, interaction.guild.id, interaction.guild.name);
+               }))
             }
          }
          catch(error)
          {
             if(error.code === 10008)
             {
-               console.error("The message has already been deleted or does not exist.");
+               Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
             }
             else
             {
-               console.error("Error updating now playing message: " + error);
+               Log.error("Error updating now playing message: ", error, interaction.guild.id, interaction.guild.name);
             }
          }
       })
       .catch(error => {
          if(error.code === 10008)
          {
-            console.error("The message has already been deleted or does not exist.");
+            Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
          }
       })
-      .catch(console.error);
+      .catch(error => {
+         Log.error("Error fetching now playing message: ", error, interaction.guild.id, interaction.guild.name);
+      });
    }
 }

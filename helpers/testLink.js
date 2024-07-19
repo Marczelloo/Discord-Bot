@@ -1,12 +1,14 @@
+const Log = require("./fancyLogs/log");
+
 module.exports = {
-   testLink: function(query) {
+   testLink: function(query, interacion) {
       const linkRegex = /((http|https):\/\/(www\.)?[\w\-_]+(\.[\w\-_]+)*([\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?)/gi;
 
       const linkMatch = linkRegex.test(query);
       
       if(linkMatch)
       {
-         console.log("Query type: Link");
+         Log.info("Query type: Link", null, interacion.guild.id, interacion.guild.name);
          return {
             type: "link",
             query: query,
@@ -14,7 +16,7 @@ module.exports = {
       }
       else
       {
-         console.log("Query type: Song name");
+         Log.info("Query type: Song name", null, interacion.guild.id, interacion.guild.name);
          return {
             type: "title",
             query: query,

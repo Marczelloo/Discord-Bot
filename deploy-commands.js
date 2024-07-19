@@ -3,6 +3,7 @@ const token = process.env.TOKEN;
 const clientId = process.env.CLIENT_ID;
 const fs = require('node:fs');
 const path = require('node:path');
+const Log = require('./helpers/fancyLogs/log');
 const guildId = process.env.GUILD_ID;
 
 const commands = [];
@@ -21,7 +22,7 @@ for (const folder of commandFolders) {
 		if ('data' in command && 'execute' in command) {
 			commands.push(command.data.toJSON());
 		} else {
-			console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+			Log.warning(`The command at ${filePath} is missing a required "data" or "execute" property.`);
 		}
 	}
 }
@@ -32,7 +33,7 @@ const rest = new REST().setToken(token);
 // Deploy your commands globally to all servers!
 (async () => {
 	try {
-		console.log(`Started refreshing ${commands.length} application (/) commands.`);
+		Log.info(`Started refreshing ${commands.length} application (/) commands.`);
 
 		// The put method is used to fully refresh all commands globally
 		const data = await rest.put(
@@ -40,9 +41,8 @@ const rest = new REST().setToken(token);
 			{ body: commands },
 		);
 
-		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+		Log.success(`Successfully reloaded ${data.length} application (/) commands.`);
 	} catch (error) {
-		// And of course, make sure you catch and log any errors!
-		console.error(error);
+		Log.error('An error occurred while refreshing application (/) commands:', error);
 	}
 })();

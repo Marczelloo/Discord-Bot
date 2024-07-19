@@ -1,11 +1,12 @@
 const { addToQueue, getServerData, setGlobalVariable } = require("../global");
 const { errorEmbed } = require("./embeds");
+const Log = require("./fancyLogs/log");
 
 module.exports = {
    autoplayGetNextSong: async function(interaction, trackId, artistId) {
       try 
       {
-         console.log("Spotify token obtained");
+         Log.info("Trying to obtain spotify token", null, interaction.guild.id, interaction.guild.name);
          const response = await fetch(`https://api.spotify.com/v1/recommendations?seed_tracks=${encodeURIComponent(trackId)}&seed_artist=${encodeURIComponent(artistId)}&limit=1`, {
             method: 'GET',
             headers: {
@@ -16,7 +17,7 @@ module.exports = {
          });
 
          const data = await response.json();
-         console.log("Spotify song obtained");
+         Log.info("Spotify song obtained", null, interaction.guild.id, interaction.guild.name);
 
          const song = data.tracks[0];
          const searchResults = await ytsr(song.name + " " + song.artists[0].name, { limit: 1});
@@ -34,11 +35,11 @@ module.exports = {
          };
 
          addToQueue(interaction.guild.id, newSong, "queue");
-         console.log("Autoplay song added to queue");
+         Log.info("Autoplay song added to queue", null, interaction.guild.id, interaction.guild.name);
       }
       catch(error)
       {
-         console.error("Error getting next song: " + error);
+         Log.error("Error getting next song: " + error, null, interaction.guild.id, interaction.guild.name);
 
          await getServerData(interaction.guild.id).commandChannel.send({ embeds: [errorEmbed("Error getting next song, please try again later")]});
          setGlobalVariable(interaction.guild.id, "autoplay", false);

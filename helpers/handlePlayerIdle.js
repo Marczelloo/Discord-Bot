@@ -14,57 +14,55 @@ async function handlePlayerIdle(interaction,
    {
 
       if (!getServerData(interaction.guild.id).player) {
-         console.error("Player not found in server data");
+         Log.error("Player not found in server data", null, interaction.guild.id, interaction.guild.name);
          return;
       }
 
       getServerData(interaction.guild.id).player.on('stateChange', (oldState, newState) => {
-         console.log(`Player state changed from ${oldState.status} to ${newState.status}`);
+         Log.info(`Player state changed from ${oldState.status} to ${newState.status}`, null, interaction.guild.id, interaction.guild.name);
       });
 
       getServerData(interaction.guild.id).player.on('idle', async () => {
-         console.log("Player is idle");
+         Log.info("Player is idle", null, interaction.guild.id, interaction.guild.name);
          if(getServerData(interaction.guild.id).schedulerPlaying)
          {
-            console.log("Scheduler is playing.");
+            Log.info("Scheduler is playing", null, interaction.guild.id, interaction.guild.name);
             setGlobalVariable(interaction.guild.id, "schedulerPlaying", false);
             clearTimeout(getServerData(interaction.guild.id).timeout);
-            console.log("Timeout for clearing variables and disconnecting stopped");
+            Log.info("Timeout for clearing variables and disconnecting stopped", null, interaction.guild.id, interaction.guild.name);
             playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);
             return;
          }
 
          if(getServerData(interaction.guild.id).autoPlay)
          {
-            console.log("Autoplay is enabled");
             await autoplay(interaction);
          }
 
          if(!getServerData(interaction.guild.id).isSkipped)
          {
-            console.log("Player is not skipped");
             isSkipped(interaction, connection);
          }
 
          if(getServerData(interaction.guild.id).player.state.status === AudioPlayerStatus.Playing)
          {
-            console.log("Player is playing");
+            Log.info("Player is playing", null, interaction.guild.id, interaction.guild.name);
             return;
          }
          else
          {
             if(getServerData(interaction.guild.id).queue.length === 0) return;
 
-            console.log("Playing first song");
+            Log.info("Playing first song", null, interaction.guild.id, interaction.guild.name);
             clearTimeout(getServerData(interaction.guild.id).timeout);
-            console.log("Timeout for clearing variables and disconnecting stopped");
+            Log.info("Timeout for clearing variables and disconnecting stopped", null, interaction.guild.id, interaction.guild.name);
             playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);
          }
       });
    }
    catch(error)
    {
-      console.error("Error handling player idle: " + error);
+      Log.error("Error handling player idle: ", error, interaction.guild.id, interaction.guild.name);
       return;
    }
 }

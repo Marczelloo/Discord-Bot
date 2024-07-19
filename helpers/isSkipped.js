@@ -1,20 +1,21 @@
 const { setGlobalVariable, unshiftQueue, getServerData, shiftQueue } = require("../global");
 const { deleteMessages } = require("./deleteMessages");
+const Log = require("./fancyLogs/log");
 const { handleIdleLoop } = require("./handleIdleLoop");
 
 function isSkipped(interaction, connection) {
    const { playNextSong } = require("./playNextSong");
 
-   console.log("Player idle");
+   Log.info("Player is idle", null, interaction.guild.id, interaction.guild.name);
    setGlobalVariable(interaction.guild.id, "isSkipped", true);
 
    if(getServerData(interaction.guild.id).playEarlier)
    {
-      console.log("Playing earlier song");
+      Log.info("Playing earlier song", null, interaction.guild.id, interaction.guild.name);
       setGlobalVariable(interaction.guild.id, "playEarlier", false);
       unshiftQueue(interaction.guild.id, "playedSongs", getServerData(interaction.guild.id).playedSongs[0]);
       clearTimeout(getServerData(interaction.guild.id).timeout);
-      console.log("Timeout for clearing variables and discoennecting stopped");
+      Log.info("Timeout for clearing variables and disconnecting stopped", null, interaction.guild.id, interaction.guild.name);
       shiftQueue(interaction.guild.id, "playedSongs");
    }
    else
@@ -27,15 +28,15 @@ function isSkipped(interaction, connection) {
       setGlobalVariable(interaction.guild.id, "nowPlayingMessage", null);
       setGlobalVariable(interaction.guild.id, "firstCommandTimestamp", null);
 
-      console.log("Queue is empty, disconnecting, claering variales and deleting messages");
+      Log.info("Queue is empty, disconnecting, clearing variables and deleting messages", null, interaction.guild.id, interaction.guild.name);
 
       deleteMessages(interaction, connection);
    }
    else if(getServerData(interaction.guild.id).playEarlier)
    {
-      console.log("Playing earlier song");;
+      Log.info("Playing earlier song", null, interaction.guild.id, interaction.guild.name);
       clearTimeout(getServerData(interaction.guild.id).timeout);
-      console.log("Timeout for clearing variables and disconnecting stopped");
+      Log.info("Timeout for clearing variables and disconnecting stopped", null, interaction.guild.id, interaction.guild.name);
       setGlobalVariable(interaction.guild.id, "playEarlier", false);
       playNextSong(interaction, connection);
    }

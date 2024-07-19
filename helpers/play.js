@@ -6,6 +6,7 @@ const { createAudioResource, StreamType } = require("@discordjs/voice");
 const { createButton } = require("./createButton");
 const { ButtonStyle } = require("discord.js");
 const { ActionRowBuilder } = require("@discordjs/builders");
+const Log = require("./fancyLogs/log");
 
 async function play(interaction, 
    outputFilePath, 
@@ -15,10 +16,13 @@ async function play(interaction,
    playingRow,
    pausedRow,
    disabledButtons) {
+
+   Log.info("Play command", null, interaction.guild.id, interaction.guild.name);
+
    const eq = getServerData(interaction.guild.id).eqEffect;
 
    if(eq)
-      outputFilePath = applyEqualizer()
+      outputFilePath = applyEqualizer(interaction, eq)
 
    const resource = createAudioResource(outputFilePath, { inputType: StreamType.OggOpus, inlineVolume: true });
    resource.volume.setVolume(0.05);
@@ -57,7 +61,6 @@ async function play(interaction,
 
    if(getServerData(interaction.guild.id).nowPlayingMessage)
    {
-      console.log(pausedRow, playingRow);
       await updateNowPlayingMessage(interaction, nowPlayingEmbed, playingRow, pausedRow);
    }
    else 
@@ -66,8 +69,6 @@ async function play(interaction,
    }
 
    await buttonFunctionality(interaction, nowPlayingEmbedFields, nowPlayingEmbed, playingRow, pausedRow, disabledButtons);
-
-   //handlePlayerIdle(interaction, connection);
 }
 
 exports.play = play;

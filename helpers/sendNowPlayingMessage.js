@@ -9,7 +9,7 @@ module.exports = {
 
       if(getServerData(interaction.guild.id).player.AudioPlayerStatus === AudioPlayerStatus.Paused)
       {
-         console.log("Sending paused message");
+         Log.info("Sending paused message", null, interaction.guild.id, interaction.guild.name);
          setGlobalVariable(interaction.guild.id, "coll", await interaction.channel.send({
             embeds: [ nowPlayingEmbed ],
             components: [ pausedRow ],
@@ -19,11 +19,13 @@ module.exports = {
             setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
             setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
          })
-         .catch(console.error));
+         .catch(error => {
+            Log.error("Error sending paused message: ", error, interaction.guild.id, interaction.guild.name);
+         }));
       }
       else
       {
-         console.log("Sending playing message");
+         Log.info("Sending playing message", null, interaction.guild.id, interaction.guild.name);
          setGlobalVariable(interaction.guild.id, "coll", await interaction.channel.send({
             embeds: [ nowPlayingEmbed ],
             components: [ playingRow ],
@@ -33,7 +35,9 @@ module.exports = {
             setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
             setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
          })
-         .catch(console.error));
+         .catch(error => {
+            Log.error("Error sending playing message: ", error, interaction.guild.id, interaction.guild.name);
+         }));
       }
 
    }

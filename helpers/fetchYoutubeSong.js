@@ -1,11 +1,13 @@
 const { default: YouTube } = require("youtube-sr");
 const { setGlobalVariable, addToQueue } = require("../global");
 const { songEmbed, errorEmbed } = require("./embeds");
+const Log = require("./fancyLogs/log");
 
 module.exports = {
    fetchYoutubeSong: async function(url, interaction) {
       try
       {
+         Log.info("Fetching youtube song by URL", url, interaction.guild.id, interaction.guild.name);
          const songInfo = await YouTube.getVideo(url);
 
          if(songInfo.nsfw)
@@ -15,13 +17,13 @@ module.exports = {
    
          if(songInfo === null || songInfo === undefined)
          {
-            console.log("No search results found for the song by URL");
+            Log.error("No search results found for the song by URL", null, interaction.guild.id, interaction.guild.name);
             await interaction.editReply({ embeds: [ errorEmbed("No search results found for the song")]});
             return
          }
          else if(songInfo.live)
          {
-            console.log("Live video found, skipping");
+            Log.warning("Live video found, skipping", null, interaction.guild.id, interaction.guild.name);
             await interaction.editReply({ embeds: [ errorEmbed("You can't play live content")]});
             return;
          }
@@ -36,18 +38,17 @@ module.exports = {
                length: songInfo.durationFormatted,
            };
    
-           console.log(newSong);
-
            addToQueue(interaction.guildId, newSong, "queue");
+
+           Log.success("Youtube song added to queue", null, interaction.guild.id, interaction.guild.name);
    
-           console.log("Adding youtube song to queue by URL");
    
            await interaction.editReply({ embeds: [ songEmbed(newSong)]})
          }
       }
       catch(error)
       {
-         console.error("Error fetching youtube song by URL: " + error);
+         Log.error("Error fetching youtube song by URL: " + error, null, interaction.guild.id, interaction.guild.name);
          await interaction.editReply({ embeds: [ errorEmbed("Error fetching youtube song, please check song URL or try again later")]});
          return;
       }

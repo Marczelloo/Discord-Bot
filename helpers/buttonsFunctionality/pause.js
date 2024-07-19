@@ -1,4 +1,5 @@
 const { getServerData } = require("../../global");
+const Log = require("../fancyLogs/log");
 
 module.exports = {
    pause: async function(interaction, 
@@ -6,8 +7,9 @@ module.exports = {
       nowPlayingEmbedFields, 
       nowPlayingEmbed,
       disabledButtons) {
-      console.log("Pause button clicked. Pausing the song");
+      Log.info("Pause button clicked", null, interaction.guild.id, interaction.guild.name);
       getServerData(interaction.guild.id).player.pause();
+      Log.info("Player paused", null, interaction.guild.id, interaction.guild.name);
 
       nowPlayingEmbedFields[1].value = 'Paused';
       nowPlayingEmbed.setFields(nowPlayingEmbedFields);
@@ -22,7 +24,7 @@ module.exports = {
       }
       catch(error)
       {
-         console.error("Error updating message: " + error);
+         Log.error("Pause Button Error updating message: ", error, interaction.guild.id, interaction.guild.name);
 
          await getServerData(interaction.guild.id).playerMessage.edit({
             embeds: [ nowPlayingEmbed],

@@ -1,4 +1,5 @@
 const { getServerData } = require("../../global");
+const Log = require("../fancyLogs/log");
 
 module.exports = {
    skip: async function(interaction, 
@@ -7,10 +8,11 @@ module.exports = {
       nowPlayingEmbedFields, 
       nowPlayingEmbed,
       disabledButtons) {
-      console.log("Skip button clicked. Skipping to the next song");
+      Log.info("Skip button clicked", null, interaction.guild.id, interaction.guild.name);
       collector.stop();
       getServerData(interaction.guild.id).player.stop();
-
+      Log.info("Song skipped", null, interaction.guild.id, interaction.guild.name);
+         
       try
       {
          await confirmation.update({
@@ -21,7 +23,7 @@ module.exports = {
       }
       catch(error)
       {
-         console.error("Error updating message: " + error);
+         Log.error("Skip Button Error updating message: ", error, interaction.guild.id, interaction.guild.name);
 
          collector.stop();
          getServerData(interaction.guild.id).player.stop();

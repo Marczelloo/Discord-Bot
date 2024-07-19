@@ -11,6 +11,7 @@ const { playNextSong } = require('../../helpers/playNextSong.js');
 const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus } = require('@discordjs/voice');
 const { handlePlayerIdle } = require('../../helpers/handlePlayerIdle.js');
 const { processUrlSong } = require('../../helpers/processUrlSong.js');
+const Log = require('../../helpers/fancyLogs/log.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -53,7 +54,7 @@ module.exports = {
 
         const query = await interaction.options.getString('query');
 
-        const song = testLink(query);
+        const song = testLink(query, interaction);
        
         const voiceChannel = await interaction.member.voice.channel;
 
@@ -88,7 +89,7 @@ module.exports = {
                 
                 if(!connection)
                 {
-                    console.error("Error joining voice channel");
+                    Log.error("Error joining voice channel", null, interaction.guild.id, interaction.guild.name);
                     return;
                 }
     
@@ -104,25 +105,32 @@ module.exports = {
                 
                     if(getServerData(interaction.guild.id).player.state.status === AudioPlayerStatus.Playing)
                     {
-                        console.log("Player is playing");
+                        Log.info("Player is playing", null, interaction.guild.id, interaction.guild.name);
                         return;    
                     }
                     else 
                     {
-                        console.log("Playing first song"); 
-                        clearTimeout(getServerData(interaction.guild.id).timeout);
-                        console.log("Timeout for clearing variables and disconnecting stopped");
-                        playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);
+                        try 
+                        {
+                            Log.info("Playing first song", null, interaction.guild.id, interaction.guild.name); 
+                            clearTimeout(getServerData(interaction.guild.id).timeout);
+                            Log.info("Timeout for clearing variables and disconnecting stopped", null, interaction.guild.id, interaction.guild.name);
+                            playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);
+                        }
+                        catch(error)
+                        {
+                            Log.error("Error playing song", error, interaction.guild.id, interaction.guild.name);
+                        }
                     }
                 }
                 catch(error)
                 {
-                    console.error("Error handling player idle: " + error);
+                    Log.error("Error handling player idle:", error, interaction.guild.id, interaction.guild.name);
                 }
             }
             catch(error)
             {
-                console.error("Error joninng voice channel or setting up player: " + error);
+                Log.error("Error joining voice channel or setting up player:", error, interaction.guild.id, interaction.guild.name);
             }
         }
     }    

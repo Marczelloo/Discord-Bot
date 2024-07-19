@@ -5,6 +5,7 @@ const { playerEmbed } = require("./embeds");
 const { nowPlayingEmbedFields } = require("./nowPlayingEmbedFields");
 const { downloadYtdlp } = require("./downloadYtdlp");
 const { downloadYtdl } = require("./downloadYtdl");
+const Log = require('./fancyLogs/log');
 
 async function playNextSong(interaction, 
    connection,
@@ -13,45 +14,47 @@ async function playNextSong(interaction,
    disabledButtons) {
    let outputFilePath;
 
-      if(getServerData(interaction.guild.id).queue.length == 0)
-      {
-         setGlobalVariable(interaction.guild.id, "player", getServerData(interaction.guild.id).player.stop());
-      }
+   Log.info("Playing next song", null, interaction.guild.id, interaction.guild.name);
 
-      let formattedTime;
-      if(getServerData(interaction.guild.id).queue[0].length.toString().includes(":"))
-      {
-         formattedTime = getServerData(interaction.guild.id).queue[0].length;
-      }
-      else
-      {
-         formattedTime = formatTime(getServerData(interaction.guild.id).queue[0].length);
-      }
+   if(getServerData(interaction.guild.id).queue.length == 0)
+   {
+      setGlobalVariable(interaction.guild.id, "player", getServerData(interaction.guild.id).player.stop());
+   }
 
-      if(getServerData(interaction.guild.id).queue[0].url.includes("spotify"))
-      {
-         const video = await ytsr(getServerData(interaction.guild.id).queue[0].title + " " + getServerData(interaction.guild.id).queue[0].artist, { limit: 1});
-         const videoInfo = video.items[0];
-               
-         const song = getServerData(interaction.guild.id).queue[0];
-         song.yt_url = videoInfo.url;
-         song.length = videoInfo.duration;
-         song.artist_url = videoInfo.author.bestAvatar.url;
+   let formattedTime;
+   if(getServerData(interaction.guild.id).queue[0].length.toString().includes(":"))
+   {
+      formattedTime = getServerData(interaction.guild.id).queue[0].length;
+   }
+   else
+   {
+      formattedTime = formatTime(getServerData(interaction.guild.id).queue[0].length);
+   }
 
-         setSongInQueue(interaction.guild.id, 0, song, "queue");
-      }
+   if(getServerData(interaction.guild.id).queue[0].url.includes("spotify"))
+   {
+      const video = await ytsr(getServerData(interaction.guild.id).queue[0].title + " " + getServerData(interaction.guild.id).queue[0].artist, { limit: 1});
+      const videoInfo = video.items[0];
+            
       const song = getServerData(interaction.guild.id).queue[0];
+      song.yt_url = videoInfo.url;
+      song.length = videoInfo.duration;
+      song.artist_url = videoInfo.author.bestAvatar.url;
 
-      const embedFields = nowPlayingEmbedFields(interaction.guild.id, song, formattedTime);
+      setSongInQueue(interaction.guild.id, 0, song, "queue");
+   }
+   const song = getServerData(interaction.guild.id).queue[0];
 
-      const nowPlayingEmbed = playerEmbed(song.title, song.url, song.image, song.artist, song.artist_url);
+   const embedFields = nowPlayingEmbedFields(interaction.guild.id, song, formattedTime);
 
-      outputFilePath = __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg";
+   const nowPlayingEmbed = playerEmbed(song.title, song.url, song.image, song.artist, song.artist_url);
 
-      if(getServerData(interaction.guild.id).ageRestricted)
-         downloadYtdlp(interaction, song.url, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
-      else
-         downloadYtdl(interaction, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
+   outputFilePath = __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg";
+
+   if(getServerData(interaction.guild.id).ageRestricted)
+      downloadYtdlp(interaction, song.url, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
+   else
+      downloadYtdl(interaction, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
 }
 
 exports.playNextSong = playNextSong;

@@ -52,7 +52,7 @@ function setSongInQueue(guildId, position, song, queueType) {
         else if(queueType === "playedSongs")
             server.playedSongs[position] = song;
         else 
-            console.error("Invalid queueType");
+            Log.error("Invalid queueType", null, guildId);
 }
 
 function addToQueue(guildId, song, queueType) {
@@ -64,8 +64,8 @@ function addToQueue(guildId, song, queueType) {
         else if(queueType === "playedSongs")
             server.playedSongs.push(song);
         else 
-            console.error("Invalid queueType");
-}
+            Log.error("Invalid queueType", null, guildId);
+    }
 
 function shiftQueue(guildId, queueType) {
     const server = getServerData(guildId);
@@ -76,7 +76,7 @@ function shiftQueue(guildId, queueType) {
     else if(queueType === "playedSongs")
         server.playedSongs.shift();
     else 
-        console.error("Invalid queueType");
+        Log.error("Invalid queueType", null, guildId);
 }
 
 function unshiftQueue(guildId, queueType, song = null) {
@@ -88,7 +88,7 @@ function unshiftQueue(guildId, queueType, song = null) {
     else if(queueType === "playedSongs")
         song ? server.playedSongs.unshift(song) : server.playedSongs.unshift();
     else 
-        console.error("Invalid queueType");
+        Log.error("Invalid queueType", null, guildId);
 }
 
 function clearGlobalVariables(guildId) {

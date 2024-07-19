@@ -3,6 +3,7 @@ const { AudioPlayerStatus } = require('@discordjs/voice');
 
 const { getServerData, getClient } = require('../../global.js');
 const { errorEmbed } = require('../../helpers/embeds.js');
+const Log = require('../../helpers/fancyLogs/log.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -21,7 +22,7 @@ module.exports = {
             const guild = interaction.guild;
             if(!guild)
             {
-                console.error('Guild is undefined');
+                Log.error('Guild is undefined', null, interaction.guild.id, interaction.guild.name);
                 return;
             }
 
@@ -49,6 +50,8 @@ module.exports = {
             .setURL(globals.queue[0].url)
             .setImage(globals.queue[0].image)
             .setTimestamp()
+
+            Log.info("Song resumed", null, interaction.guild.id, interaction.guild.name);
 
             interaction.reply({ embeds: [embed] });
         }

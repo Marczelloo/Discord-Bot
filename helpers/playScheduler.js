@@ -1,13 +1,15 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, StreamType, VoiceConnectionStatus, AudioPlayerStatus } = require('@discordjs/voice');
 const { getVoiceConnection } = require('@discordjs/voice');
 
-const globals = require('../global.js');
+const { getServerData, setGlobalVariable, addToQueue, shiftQueue } = require('../global.js');
 const { readFile } = require('fs').promises;
 const path = require('path');
+const Log = require('./fancyLogs/log.js');
 
-async function play(scheduleTime) {
+async function play(scheduleTime, interacion) {
     const guilds = globals.client.guilds.cache;
 
+    Log.info("Playing schedulers", null, null, null);
     for (const guild of guilds) 
     {
         const guildId = guild[0];
@@ -17,35 +19,39 @@ async function play(scheduleTime) {
         const guildSchedulers = parsedData.filter(data => data.guildId === guildId);
 
         if (guildSchedulers[0].schedulers === true) {
+            Log.info("Getting connection", null, guildId, guild[1].name);
             const connection = getVoiceConnection(guildId);
             
             if(connection && connection.state.status === VoiceConnectionStatus.Ready) 
             {
-                console.log('The bot is connected to a voice channel.');
+                Log.info("The bot is connected to a voice channel.", null, guildId, guild[1].name);
 
-                if(globals.player === undefined || globals.player == null)
+                if(getServerData(guild.id).player === undefined || getServerData(guild.id).player == null)
                 {
-                    globals.player = createAudioPlayer();
+                    getServerData(guild.id).player = createAudioPlayer();
                 }
 
                 let filePath;
                 if (scheduleTime == 'morning') 
                 {
+                    Log.info("Playing morning schedulers song", null, guildId, guild[1].name);
                     filePath = path.resolve(__dirname, '/scheduleersSongs/pierwszyProgramRadia.ogg');
-                    globals.queue.push({ title: 'Pierwszy program radia', url: filePath, image: '', length: '' });
+                    addToQueue(guildId, { title: 'Pierwszy program radia', url: filePath, image: '', length: '' });
                 } 
                 else if (scheduleTime == 'evening') 
                 {
                     const random = Math.random();
                     if(random < 0.5)
                     {
+                        Log.info("Playing evening schedulers song", null, guildId, guild[1].name);
                         filePath = path.resolve(__dirname, 'schedulersSongs/barka.ogg')
-                        globals.queue.unshift({ title: 'Barka', url: 'https://youtu.be/A3gQzWmW6Sk?si=EznoGxg-FIezqIaV', image: '', length: '' });
+                        addToQueue(guildId, { title: 'Barka', url: 'https://youtu.be/A3gQzWmW6Sk?si=EznoGxg-FIezqIaV', image: '', length: '' });
                     }
                     else
                     {
+                        Log.info("Playing evening schedulers song", null, guildId, guild[1].name);
                         filePath = path.resolve(__dirname, 'schedulersSongs/papiezowa.ogg')
-                        globals.queue.unshift({ title: 'Papiezowa', url: 'https://youtu.be/2yusdx60_aw?si=a-_aOm6lt_dJNfG7filePath', image: '', length: '' });
+                        addToQueue(guildId, { title: 'Papiezowa', url: 'https://youtu.be/2yusdx60_aw?si=a-_aOm6lt_dJNfG7filePath', image: '', length: '' });
                     }                   
                 }
 
@@ -54,23 +60,24 @@ async function play(scheduleTime) {
                     inlineVolume: true
                 });
                 
-                globals.resource = resource;
-                globals.resource.volume.setVolume(0.05);
+                setGlobalVariable(guild.id, resource, resource);
+                setGlobalVariable(guild.id, 'volume', 0.05);
 
-                globals.player.play(resource);
-                
-                globals.isSkipped = false;
-                globals.schedulerPlaying = true;
+                Log.info("Playing schedulers song", null, guildId, guild[1].name);
+                getServerData(guild.id).player.play(resource);
 
+                setGlobalVariable(guild.id, 'isSkipped', false);
+                setGlobalVariable(guild.id, 'schedulerPlaying', true);
             } 
             else 
             {
-                console.log('The bot is not connected to a voice channel.');
+                Log.info("The bot is not connected to a voice channel.", null, guildId, guild[1].name);
                 const voiceChannels = guild[1].channels.cache.filter(channel => channel.type === 2 && channel.members.size > 0);
 
                 const randomChannel = voiceChannels.random(); 
 
                 if (randomChannel) {
+                    Log.ingo("Connecting to voice channel", null, guildId, guild[1].name);
                     const voiceChannel = joinVoiceChannel({
                         channelId: randomChannel.id,
                         guildId: guildId,
@@ -85,6 +92,7 @@ async function play(scheduleTime) {
                     let filePath;
                     if (scheduleTime == 'morning') 
                     {
+                        Log.info("Playing morning schedulers song", null, guildId, guild[1].name);
                         filePath = path.resolve(__dirname, 'schedulersSongs/pierwszyProgramRadia.ogg');
                         globals.queue.push({ title: 'Pierwszy program radia', url: filePath, image: '', length: '' });
                     } 
@@ -93,11 +101,13 @@ async function play(scheduleTime) {
                         const random = Math.random();
                         if(random < 0.5)
                         {
+                            Log.info("Playing evening schedulers song", null, guildId, guild[1].name);
                             filePath = path.resolve(__dirname, 'schedulersSongs/barka.ogg')
                             globals.queue.push({ title: 'Barka', url: filePath, image: '', length: '' });
                         }
                         else
                         {
+                            Log.info("Playing evening schedulers song", null, guildId, guild[1].name);
                             filePath = path.resolve(__dirname, 'schedulersSongs/papiezowa.ogg')
                             globals.queue.push({ title: 'Papiezowa', url: filePath, image: '', length: '' });
                         }                   
@@ -111,31 +121,32 @@ async function play(scheduleTime) {
                                 inlineVolume: true
                             });
                             
-                            globals.resource = resource;
-                            globals.resource.volume.setVolume(0.05);
-                            voiceChannel.subscribe(globals.player);    
+                            setGlobalVariable(guildId, 'resource', resource);
+                            setGlobalVariable(guildId, 'volume', 0.05);
+                          
+                            voiceChannel.subscribe(getServerData(guildId).player);    
 
-                            if (globals.player.state.status === AudioPlayerStatus.Idle) {
-                                globals.player.play(resource);
+                            if (getServerData(guildId).player.state.status === AudioPlayerStatus.Idle) {
+                                Log.info("Playing schedulers song", null, guildId, guild[1].name);
+                                getServerData(guildId).player.play(resource);
                             }
         
-                            globals.isSkipped = false;
-                            globals.schedulerPlaying = true;
-                                
+                            setGlobalVariable(guildId, 'isSkipped', false);
+                            setGlobalVariable(guildId, 'schedulerPlaying', true);                       
                         }
                         catch (err)
                         {
-                            console.error(err);
+                            Log.error("Error playing schedulers song", err, guildId, guild[1].name);
                         }
                     }
 
                     p();
 
-                    globals.player.on('idle', () => {
-                        console.log('idle');
+                    getServerData(guildId).player.on('idle', () => {
+                        Log.info("Player is idle", null, guildId, guild[1].name);
 
-                        globals.queue.shift();
-                        if (globals.queue.length === 0) 
+                        shiftQueue(guildId, 'queue');
+                        if (getServerData(guildId).queue.length === 0) 
                         {
                             voiceChannel.disconnect();
                         }

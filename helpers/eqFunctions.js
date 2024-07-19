@@ -1,15 +1,18 @@
 const ffmpeg = require('fluent-ffmpeg');
 const fs = require('fs');
 const path = require('path');
+const Log = require('./fancyLogs/log');
 
-async function bassBoost() {
-    const input = path.join(__dirname, "output.ogg");
-    const output = path.join(__dirname, "eqOutput.ogg");
+async function bassBoost(interaction) {
+    const input = path.resolve(__dirname, __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg");
+    const output = path.resolve(__dirname, __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg");
+
+    Log.info("Applying bass boost", null, interaction.guild.id, interaction.guild.name);
 
     return new Promise((resolve, reject) => {
         fs.access(input, fs.constants.F_OK | fs.constants.R_OK, (err) => {
             if (err) {
-                console.error(`Cannot open song file: ${err}`);
+                Log.err("Cannot open song file", err, interaction.guild.id, interaction.guild.name);
                 reject(err);
             } else {
                 ffmpeg(input)
@@ -19,11 +22,11 @@ async function bassBoost() {
                     'equalizer=f=200:width_type=h:width=100:g=5',
                     ])
                     .on('error', (err) => {
-                        console.error(err);
+                        Log.error("Error applying bass boost", err, interaction.guild.id, interaction.guild.name);
                         reject(err);
                     })
                     .on('end', () => {
-                        console.log("Bass boost finished");
+                        Log.success("Bass boost finished", null, interaction.guild.id, interaction.guild.name);
                         resolve();
                     })
                     .save(output);
@@ -32,24 +35,26 @@ async function bassBoost() {
     });
 }
 
-async function bassBoostV2() {
-    const input = path.join(__dirname, "output.ogg");
-    const output = path.join(__dirname, "eqOutput.ogg");
+async function bassBoostV2(interaction) {
+    const input = path.resolve(__dirname, __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg");
+    const output = path.resolve(__dirname, __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg");
+
+    Log.info("Applying bass boost v2", null, interaction.guild.id, interaction.guild.name);
 
     return new Promise((resolve, reject) => {
         fs.access(input, fs.constants.F_OK | fs.constants.R_OK, (err) => {
             if (err) {
-                console.error(`Cannot open song file: ${err}`);
+                Log.error("Cannot open song file", err, interaction.guild.id, interaction.guild.name);
                 reject(err);
             } else {
                 ffmpeg(input)
                 .audioFilter('equalizer=f=40:width_type=h:width=50:g=10')
                     .on('error', (err) => {
-                        console.error(err);
+                        Log.error("Error applying bass boost v2", err, interaction.guild.id, interaction.guild.name);
                         reject(err);
                     })
                     .on('end', () => {
-                        console.log("Bass boost v2 finished");
+                        Log.success("Bass boost v2 finished", null, interaction.guild.id, interaction.guild.name);
                         resolve();
                     })
                     .save(output);
@@ -58,25 +63,26 @@ async function bassBoostV2() {
     });
 }
 
-async function earrape()
-{
-    const input = path.join(__dirname, "output.ogg");
-    const output = path.join(__dirname, "eqOutput.ogg");
+async function earrape(interaction){
+    const input = path.resolve(__dirname, __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg");
+    const output = path.resolve(__dirname, __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg");
+
+    Log.info("Applying earrape", null, interaction.guild.id, interaction.guild.name);
 
     return new Promise((resolve, reject) => {
         fs.access(input, fs.constants.F_OK | fs.constants.R_OK, (err) => {
             if (err) {
-                console.error(`Cannot open song file: ${err}`);
+                Log.err("Cannot open song file", err, interaction.guild.id, interaction.guild.name);
                 reject(err);
             } else {
                 ffmpeg(input)
                     .audioFilter('volume=100')
                     .on('error', (err) => {
-                        console.error(err);
+                        Log.error("Error applying earrape", err, interaction.guild.id, interaction.guild.name);
                         reject(err);
                     })
                     .on('end', () => {
-                        console.log("Earrape finished");
+                        Log.success("Earrape finished", null, interaction.guild.id, interaction.guild.name);
                         resolve();
                     })
                     .save(output);
@@ -86,15 +92,17 @@ async function earrape()
     })
 }
 
-async function nightcore()
+async function nightcore(interaction)
 {
-    const input = path.join(__dirname, "output.ogg");
-    const output = path.join(__dirname, "eqOutput.ogg");
+    const input = path.resolve(__dirname, __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg");
+    const output = path.resolve(__dirname, __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg");
+
+    Log.info("Applying nightcore", null, interaction.guild.id, interaction.guild.name);
 
     return new Promise((resolve, reject) => {
         fs.access(input, fs.constants.F_OK | fs.constants.R_OK, (err) => {
             if (err) {
-                console.error(`Cannot open song file: ${err}`);
+                Log.error("Cannot open song file", err, interaction.guild.id, interaction.guild.name);
                 reject(err);
             } else {
                 ffmpeg(input)
@@ -106,11 +114,11 @@ async function nightcore()
                         'aresample=48000' // Set the audio sample rate
                     ])   
                     .on('error', (err) => {
-                        console.error(err);
+                        Log.error("Error applying nightcore", err, interaction.guild.id, interaction.guild.name);
                         reject(err);
                     })
                     .on('end', () => {
-                        console.log("Nightcore finished");
+                        Log.success("Nightcore finished", null, interaction.guild.id, interaction.guild.name);
                         resolve();
                     })
                     .save(output);
@@ -119,14 +127,16 @@ async function nightcore()
     })
 }
 
-async function slowReverb() {
-    const input = path.join(__dirname, "output.ogg");
-    const output = path.join(__dirname, "eqOutput.ogg");
+async function slowReverb(interaction) {
+    const input = path.resolve(__dirname, __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg");
+    const output = path.resolve(__dirname, __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg");
+
+    Log.info("Applying slow and reverbed", null, interaction.guild.id, interaction.guild.name);
 
     return new Promise((resolve, reject) => {
         fs.access(input, fs.constants.F_OK | fs.constants.R_OK, (err) => {
             if (err) {
-                console.error(`Cannot open song file: ${err}`);
+                Log.error("Cannot open song file", err, interaction.guild.id, interaction.guild.name);
                 reject(err);
             } else {
                 ffmpeg(input)
@@ -136,11 +146,11 @@ async function slowReverb() {
                         'lowpass=f=850'
                     ])
                     .on('error', (err) => {
-                        console.error(err);
+                        Log.error("Error applying slow and reverbed", err, interaction.guild.id, interaction.guild.name);
                         reject(err);
                     })
                     .on('end', () => {
-                        console.log("Slow and reverbed finished");
+                        Log.success("Slow and reverbed finished", null, interaction.guild.id, interaction.guild.name);
                         resolve();
                     })
                     .save(output);
@@ -149,14 +159,16 @@ async function slowReverb() {
     })
 }
 
-async function eightBit() {
-    const input = path.join(__dirname, "output.ogg");
-    const output = path.join(__dirname, "eqOutput.ogg");
+async function eightBit(interaction) {
+    const input = path.resolve(__dirname, __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg");
+    const output = path.resolve(__dirname, __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg");
+
+    Log.info("Applying 8 bit", null, interaction.guild.id, interaction.guild.name);
 
     return new Promise((resolve, reject) => {
         fs.access(input, fs.constants.F_OK | fs.constants.R_OK, (err) => {
             if (err) {
-                console.error(`Cannot open song file: ${err}`);
+                Log.error("Cannot open song file", err, interaction.guild.id, interaction.guild.name);
                 reject(err);
             } else {
                 ffmpeg(input)
@@ -169,11 +181,11 @@ async function eightBit() {
                 ])                     
                 .audioBitrate('8k')
                     .on('error', (err) => {
-                        console.error(err);
+                        Log.error("Error applying 8 bit", err, interaction.guild.id, interaction.guild.name);
                         reject(err);
                     })
                     .on('end', () => {
-                        console.log("8 bit finished");
+                        Log.success("8 bit finished", null, interaction.guild.id, interaction.guild.name);
                         resolve();
                     })
                     .save(output);
@@ -183,14 +195,16 @@ async function eightBit() {
 }
 
 
-async function dolbyRetardos() {
-    const input = path.join(__dirname, "output.ogg");
-    const output = path.join(__dirname, "eqOutput.ogg");
+async function dolbyRetardos(interaction) {
+    const input = path.resolve(__dirname, __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg");
+    const output = path.resolve(__dirname, __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg");
+
+    Log.info("Applying dolby retardos", null, interaction.guild.id, interaction.guild.name);
 
     return new Promise((resolve, reject) => {
         fs.access(input, fs.constants.F_OK | fs.constants.R_OK, (err) => {
             if (err) {
-                console.error(`Cannot open song file: ${err}`);
+                Log.error("Cannot open song file", err, interaction.guild.id, interaction.guild.name);
                 reject(err);
             } else {
                 ffmpeg(input)
@@ -204,11 +218,11 @@ async function dolbyRetardos() {
                     '-ac', '2' // Ustawienie wyjścia na stereo
                 ])
                 .on('error', (err) => {
-                    console.error(err);
+                    Log.error("Error applying dolby retardos", err, interaction.guild.id, interaction.guild.name);
                     reject(err);
                 })
                 .on('end', () => {
-                    console.log("dolbyRetardos finished");
+                    Log.success("Dolby Retardos finished", null, interaction.guild.id, interaction.guild.name); 
                     resolve();
                 })
                 .save(output);
@@ -217,15 +231,16 @@ async function dolbyRetardos() {
     });
 }
 
-async function inverted()
-{             
-    const input = path.join(__dirname, "output.ogg");
-    const output = path.join(__dirname, "eqOutput.ogg");
+async function inverted(interaction){             
+    const input = path.resolve(__dirname, __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg");
+    const output = path.resolve(__dirname, __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg");
+
+    Log.info("Applying inverted", null, interaction.guild.id, interaction.guild.name);
 
     return new Promise((resolve, reject) => {
         fs.access(input, fs.constants.F_OK | fs.constants.R_OK, (err) => {
             if (err) {
-                console.error(`Cannot open song file: ${err}`);
+                Log.err("Cannot open song file", err, interaction.guild.id, interaction.guild.name);
                 reject(err);
             } else {
                 ffmpeg(input)
@@ -236,11 +251,11 @@ async function inverted()
                     '-ac', '1' // Ustawienie wyjścia na mono
                 ])     
                 .on('error', (err) => {
-                    console.error(err);
+                    Log.error("Error applying inverted", err, interaction.guild.id, interaction.guild.name);
                     reject(err);
                 })
                 .on('end', () => {
-                    console.log("Inverted finished");
+                    Log.success("Inverted finished", null, interaction.guild.id, interaction.guild.name);
                     resolve();
                 })
                 .save(output);
@@ -250,16 +265,17 @@ async function inverted()
 
 }
 
-async function toiletAtClub()
-{
-    const input = path.join(__dirname, "output.ogg");
-    const output = path.join(__dirname, "eqOutput.ogg");
+async function toiletAtClub(interaction){
+    const input = path.resolve(__dirname, __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg");
+    const output = path.resolve(__dirname, __dirname + "/../temp/" + "outputEQ_" + interaction.guild.id + ".ogg");
+
+    Log.info("Applying bathroom at club", null, interaction.guild.id, interaction.guild.name);
 
     return new Promise((resolve, reject) => {
         fs.access(input, fs.constants.F_OK | fs.constants.R_OK, (err) => {
             if(err) 
-            {
-                console.error(`Cannot open song file: ${err}`);
+            {   
+                Log.error("Cannot open song file", err, interaction.guild.id, interaction.guild.name);
                 reject(err);
             }
             else
@@ -277,11 +293,11 @@ async function toiletAtClub()
                     '-ac', '2' // Set output to stereo
                 ])
                 .on('error', (err) => {
-                    console.error(err);
+                    Log.error("Error applying bathroom at club", err, interaction.guild.id, interaction.guild.name);
                     reject(err);
                 })
                 .on('end', () => {
-                    console.log("Bathroom at club finished");
+                    Log.success("Bathroom at club finished", null, interaction.guild.id, interaction.guild.name);
                     resolve();
                 })
                 .save(output);

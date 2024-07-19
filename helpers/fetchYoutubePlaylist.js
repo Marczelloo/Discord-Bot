@@ -1,10 +1,12 @@
 const { default: YouTube } = require("youtube-sr");
 const { setGlobalVariable, addToQueue } = require("../global");
+const Log = require("./fancyLogs/log");
 
 module.exports = {
    fetchYoutubePlaylist: async function(url, interaction) {
       try 
       {
+         Log.info("Fetching youtube playlist", url, interaction.guild.id, interaction.guild.name);
          const playlistId = url.split('list=')[1];
          const playlist = await YouTube.getPlaylist(playlistId);
          const videos = await new Promise((resolve, reject) => {
@@ -30,13 +32,13 @@ module.exports = {
             addToQueue(interaction.guildId, newSong, "queue");
         }));
 
-        console.log("Adding youtube playlist to queue");
+        Log.success("Youtube playlist added to queue", null, interaction.guild.id, interaction.guild.name)
 
         await interaction.editReply({ embeds: [ successEmbed("Playlist added to queue")]});
       }
       catch(error)
       {
-         console.error("Error fetching youtube playlist: " + error);
+         Log.error("Error fetching youtube playlist: " + error, null, interaction.guild.id, interaction.guild.name);
          await interaction.editReply({ embeds: [ errorEmbed("Error adding playlist to queue, if the playlist is private, age restricted or your mix, the bot can't add it to the queue")]});
          return;
       }

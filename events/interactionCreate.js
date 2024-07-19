@@ -1,4 +1,6 @@
 const { Events } = require('discord.js');
+const { errorEmbed } = require('../helpers/embeds');
+const Log = require('../helpers/fancyLogs/log');
 
 module.exports = {
     name: Events.InteractionCreate,
@@ -8,7 +10,7 @@ module.exports = {
 		const command = interaction.client.commands.get(interaction.commandName);
 
 		if (!command) {
-			console.error(`No command matching ${interaction.commandName} was found.`);
+			Log.error(`No command matching ${interaction.commandName} was found.`, null, `Command name: ${interaction.commandName}`, interaction.guild.id, interaction.guild.name);
 			return;
 		}
 
@@ -16,8 +18,9 @@ module.exports = {
 		{
 			await command.execute(interaction);
 		} catch (error) {
-			console.error(`Error executing ${interaction.commandName}`);
-			console.error(error);
+			Log.error(`Error executing ${interaction.commandName}`, error, `Command name: ${interaction.commandName}`, interaction.guild.id, interaction.guild.name);
+
+			await interaction.reply({ embed: [ errorEmbed(`Error executing command ${interaction.commandName} ${error} `) ] });
 		}
     },
 };

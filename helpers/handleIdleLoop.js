@@ -3,7 +3,8 @@ const { getServerData, LoopType, addToQueue, unshiftQueue, shiftQueue, setGlobal
 module.exports = {
    handleIdleLoop: function(interaction) {
       const loopType = getServerData(interaction.guild.id).loopType
-      console.log("Loop type: " + loopType);
+      Log.info("Handling idle loop", null, interaction.guild.id, interaction.guild.name);
+      Log.info("Loop type: " + loopType, null, interaction.guild.id, interaction.guild.name);
       switch(loopType)
       {
          case LoopType.LOOP_QUEUE:
@@ -27,6 +28,6 @@ module.exports = {
             break;
       }
       clearTimeout(getServerData(interaction.guild.id).timeout);
-      console.log("Timeout for clearing variables and disconnecting stopped");
+      Log.info("Timeout for clearing variables and disconnecting cleared", null, interaction.guild.id, interaction.guild.name);
    }
 }
