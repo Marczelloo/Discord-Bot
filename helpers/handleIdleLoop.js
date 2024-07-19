@@ -1,4 +1,5 @@
 const { getServerData, LoopType, addToQueue, unshiftQueue, shiftQueue, setGlobalVariable } = require("../global");
+const Log = require("./fancyLogs/log");
 
 module.exports = {
    handleIdleLoop: function(interaction) {

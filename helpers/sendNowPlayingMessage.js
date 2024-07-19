@@ -1,5 +1,6 @@
 const { AudioPlayerStatus } = require("@discordjs/voice");
 const { getServerData, setGlobalVariable } = require("../global");
+const Log = require("./fancyLogs/log");
 
 module.exports = {
    sendNowPlayingMessage: async function(interaction,   

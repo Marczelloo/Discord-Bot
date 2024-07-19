@@ -1,3 +1,5 @@
+const Log = require("./helpers/fancyLogs/log");
+
 const LoopType = {
     NO_LOOP: 0,
     LOOP_QUEUE: 1,

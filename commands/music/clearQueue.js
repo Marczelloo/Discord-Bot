@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 
 const { getServerData, setGlobalVariable, getClient } = require('../../global.js');
 const { errorEmbed, successEmbed } = require('../../helpers/embeds.js');
+const Log = require('../../helpers/fancyLogs/log.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
