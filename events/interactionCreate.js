@@ -5,7 +5,7 @@ const Log = require('../helpers/fancyLogs/log');
 module.exports = {
     name: Events.InteractionCreate,
     async execute(interaction){
-        if (!interaction.isChatInputCommand()) return;
+		if (!interaction.isChatInputCommand()) return;
 
 		const command = interaction.client.commands.get(interaction.commandName);
 
@@ -19,8 +19,6 @@ module.exports = {
 			await command.execute(interaction);
 		} catch (error) {
 			Log.error(`Error executing ${interaction.commandName}`, error, `Command name: ${interaction.commandName}`, interaction.guild.id, interaction.guild.name);
-
-			await interaction.reply({ embed: [ errorEmbed(`Error executing command ${interaction.commandName} ${error} `) ] });
 		}
     },
 };

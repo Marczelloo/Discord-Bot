@@ -1,11 +1,12 @@
 const ytsr = require('ytsr');
-const { setSongInQueue, getServerData, setGlobalVariable } = require("../global");
+const { setSongInQueue, getServerData, setGlobalVariable, shiftQueue } = require("../global");
 const { formatTime } = require("./formatTime");
 const { playerEmbed } = require("./embeds");
 const { nowPlayingEmbedFields } = require("./nowPlayingEmbedFields");
 const { downloadYtdlp } = require("./downloadYtdlp");
 const { downloadYtdl } = require("./downloadYtdl");
 const Log = require('./fancyLogs/log');
+const { default: YouTube } = require('youtube-sr');
 
 async function playNextSong(interaction, 
    connection,
@@ -33,13 +34,35 @@ async function playNextSong(interaction,
 
    if(getServerData(interaction.guild.id).queue[0].url.includes("spotify"))
    {
-      const video = await ytsr(getServerData(interaction.guild.id).queue[0].title + " " + getServerData(interaction.guild.id).queue[0].artist, { limit: 1});
-      const videoInfo = video.items[0];
-            
-      const song = getServerData(interaction.guild.id).queue[0];
-      song.yt_url = videoInfo.url;
-      song.length = videoInfo.duration;
-      song.artist_url = videoInfo.author.bestAvatar.url;
+      try
+      {
+         Log.info("Trying to get spotify song info with ytsr", null, interaction.guild.id, interaction.guild.name);
+         const video = await ytsr(getServerData(interaction.guild.id).queue[0].title + " " + getServerData(interaction.guild.id).queue[0].artist, { limit: 1});
+         const videoInfo = video.items[0];
+               
+         const song = getServerData(interaction.guild.id).queue[0];
+         song.yt_url = videoInfo.url;
+         song.length = videoInfo.duration;
+         song.artist_url = videoInfo.author.bestAvatar.url;
+      }
+      catch(error)
+      {
+         Log.error("Error getting spotify song info ytld", error, interaction.guild.id, interaction.guild.name);
+         Log.info("Trying to get spotify song info with YouTube.search", null, interaction.guild.id, interaction.guild.name);
+         YouTube.search(getServerData(interaction.guild.id).queue[0].title + " " + getServerData(interaction.guild.id).queue[0].artist, { limit: 1 })
+         .then(async video => {
+            const song = getServerData(interaction.guild.id).queue[0];
+            song.yt_url = video[0].url;
+            song.length = video[0].duration;
+            song.artist_url = video[0].channel.url;
+         })
+         .catch(error => {
+            Log.error("Error getting spotify song info with Yutube.search", error, interaction.guild.id, interaction.guild.name);
+            interaction.editReply({ content: "There was an error getting the song info. Please try again."})
+            shiftQueue(interaction.guild.id, 0, "queue");
+            playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);
+         })
+      }
 
       setSongInQueue(interaction.guild.id, 0, song, "queue");
    }
@@ -55,6 +78,6 @@ async function playNextSong(interaction,
       downloadYtdlp(interaction, song.url, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
    else
       downloadYtdl(interaction, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
-}
+} 
 
 exports.playNextSong = playNextSong;

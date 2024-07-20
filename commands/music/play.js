@@ -76,6 +76,8 @@ module.exports = {
         if(song.type === "title")
             await processTitleSong(song.query, interaction);
 
+        Log.info("Checking if queue is empty", null, interaction.guild.id, interaction.guild.name);
+
         if(getServerData(interaction.guild.id).queue.length >= 1)
         {
             try

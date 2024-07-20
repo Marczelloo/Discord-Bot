@@ -1,3 +1,5 @@
+const path = require("path");
+
 const LogTextColor =  {
    BLACK: '\x1b[30m',
    RED: '\x1b[31m',
@@ -54,9 +56,10 @@ const reset = '\x1b[0m';
 class Log {
    static info (message, arg, ...additionalInfo) {
       const time = new Date().toLocaleTimeString()
+      const callerFile = Log.getCallerFile();
       let formattedMessage = "";
       formattedMessage += `${bright}${LogTextColor.WHITE}${LogBackgroundColor.CYAN} ${Blocks.LEFTHALF}INFO${spacer}   ${reset}`;
-      formattedMessage += `${LogTextColor.WHITE}${LogBackgroundColor.GRAY} ${time} `;
+      formattedMessage += `${LogTextColor.WHITE}${LogBackgroundColor.GRAY} ${time} ${Blocks.FULL} ${callerFile} `;
       if(additionalInfo.length != 0) {
          formattedMessage += `${Blocks.FULL} `;
          const infoString = additionalInfo.map((info, index) => {
@@ -76,9 +79,10 @@ class Log {
 
    static success(message, arg, ...additionalInfo) {
       const time = new Date().toLocaleTimeString()
+      const callerFile = Log.getCallerFile();
       let formattedMessage = "";
       formattedMessage += `${bright}${LogTextColor.WHITE}${LogBackgroundColor.GREEN} ${Blocks.LEFTHALF}SUCCESS${spacer}${reset}`;
-      formattedMessage += `${LogTextColor.WHITE}${LogBackgroundColor.GRAY} ${time} `;
+      formattedMessage += `${LogTextColor.WHITE}${LogBackgroundColor.GRAY} ${time} ${Blocks.FULL} ${callerFile} `
       if(additionalInfo.length != 0) {
          formattedMessage += `${Blocks.FULL} `;
          const infoString = additionalInfo.map((info, index) => {
@@ -97,10 +101,11 @@ class Log {
    }
 
    static warning(message, arg = null, ...additionalInfo) {
-      const time = new Date().toLocaleTimeString()
+      const time = new Date().toLocaleTimeString();
+      const callerFile = Log.getCallerFile();
       let formattedMessage = "";
       formattedMessage += `${bright}${LogTextColor.WHITE}${LogBackgroundColor.YELLOW} ${Blocks.LEFTHALF}WARNING${spacer}${reset}`;
-      formattedMessage += `${LogTextColor.WHITE}${LogBackgroundColor.GRAY} ${time} `;
+      formattedMessage += `${LogTextColor.WHITE}${LogBackgroundColor.GRAY} ${time} ${Blocks.FULL} ${callerFile} `
       if(additionalInfo.length != 0) {
          formattedMessage += `${Blocks.FULL} `;
          const infoString = additionalInfo.map((info, index) => {
@@ -120,9 +125,10 @@ class Log {
 
    static error(message, arg = null, ...additionalInfo) {
       const time = new Date().toLocaleTimeString()
+      const callerFile = Log.getCallerFile();
       let formattedMessage = "";
       formattedMessage += `${bright}${LogTextColor.WHITE}${LogBackgroundColor.RED} ${Blocks.LEFTHALF}ERROR${spacer}  ${reset}`;
-      formattedMessage += `${LogTextColor.WHITE}${LogBackgroundColor.GRAY} ${time} `;
+      formattedMessage += `${LogTextColor.WHITE}${LogBackgroundColor.GRAY} ${time} ${Blocks.FULL} ${callerFile} `
       if(additionalInfo.length != 0) {
          formattedMessage += `${Blocks.FULL} `;
          const infoString = additionalInfo.map((info, index) => {
@@ -148,19 +154,27 @@ class Log {
       process.stdout.clearLine();
       process.stdout.cursorTo(0);
       const progressBarLength = 20;
-      const totalBlocks = progressBarLength * 8; // Total number of sub-blocks
-      const filledBlocks = Math.floor(totalBlocks * progress / 100);
-      const fullBlockCount = Math.floor(filledBlocks / 8); // Full blocks
-      const partialBlockIndex = filledBlocks % 8; // Index for the partial block
-      const emptyBlockCount = progressBarLength - fullBlockCount - (partialBlockIndex > 0 ? 1 : 0); // Calculate empty blocks
+      let progressBar;
    
-      const progressBar = `${ProgressBarBlocks[8].repeat(fullBlockCount)}${ProgressBarBlocks[partialBlockIndex]}${ProgressBarBlocks[0].repeat(Math.max(0, emptyBlockCount))}`;
-
+      if (progress === 100) {
+         // Directly set the progress bar to be fully filled
+         progressBar = ProgressBarBlocks[8].repeat(progressBarLength);
+      } else {
+         const totalBlocks = progressBarLength * 8; // Total number of sub-blocks
+         const filledBlocks = Math.floor(totalBlocks * progress / 100);
+         const fullBlockCount = Math.floor(filledBlocks / 8); // Full blocks
+         const partialBlockIndex = filledBlocks % 8; // Index for the partial block
+         const emptyBlockCount = progressBarLength - fullBlockCount - (partialBlockIndex > 0 ? 1 : 0); // Calculate empty blocks
+   
+         progressBar = `${ProgressBarBlocks[8].repeat(fullBlockCount)}${ProgressBarBlocks[partialBlockIndex]}${ProgressBarBlocks[0].repeat(Math.max(0, emptyBlockCount))}`;
+      }
+   
       const time = new Date().toLocaleTimeString();
-
+      const callerFile = Log.getCallerFile();
+   
       let formattedMessage = "";
       formattedMessage += `${bright}${LogTextColor.WHITE}${LogBackgroundColor.BLUE} ${Blocks.LEFTHALF}PROGRESS${spacer.substring(1,5)}${reset}`;
-      formattedMessage += `${LogTextColor.WHITE}${LogBackgroundColor.GRAY} ${time} `;
+      formattedMessage += `${LogTextColor.WHITE}${LogBackgroundColor.GRAY} ${time} ${Blocks.FULL} ${callerFile} `
       if(additionalInfo.length != 0) {
          formattedMessage += `${Blocks.FULL} `;
          const infoString = additionalInfo.map((info, index) => {
@@ -170,7 +184,7 @@ class Log {
                return `${info} ${Blocks.FULL} `;
             }
          }).join('');
-
+   
          formattedMessage += infoString;
       }
       formattedMessage += `${LogBackgroundColor.BLUE} ${reset}`;
@@ -183,6 +197,23 @@ class Log {
          process.stdout.write('\n');
       }
    }
+
+   static getCallerFile() {
+      const originalPrepareStackTrace = Error.prepareStackTrace;
+      Error.prepareStackTrace = (_, stack) => stack;
+      const error = new Error();
+      const currentFile = error.stack.shift().getFileName();
+      while (error.stack.length) {
+          const stackFrame = error.stack.shift();
+          const fileName = stackFrame.getFileName();
+          if (fileName !== currentFile) {
+              Error.prepareStackTrace = originalPrepareStackTrace;
+              return path.basename(fileName);
+          }
+      }
+      Error.prepareStackTrace = originalPrepareStackTrace;
+      return "unknown";
+  }
 }
 
 

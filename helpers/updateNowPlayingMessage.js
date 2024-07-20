@@ -14,6 +14,7 @@ module.exports = {
          if (message) message.delete().catch(error => {
             if(error.code === 10008)
             {
+               //TODO - Add sending nowPlaying message here
                Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
             }
             else

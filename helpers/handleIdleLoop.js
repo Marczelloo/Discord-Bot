@@ -3,9 +3,9 @@ const Log = require("./fancyLogs/log");
 
 module.exports = {
    handleIdleLoop: function(interaction) {
-      const loopType = getServerData(interaction.guild.id).loopType
+      const loopType = getServerData(interaction.guild.id).loop
       Log.info("Handling idle loop", null, interaction.guild.id, interaction.guild.name);
-      Log.info("Loop type: " + loopType, null, interaction.guild.id, interaction.guild.name);
+      Log.info("Loop type: ", loopType, interaction.guild.id, interaction.guild.name);
       switch(loopType)
       {
          case LoopType.LOOP_QUEUE:

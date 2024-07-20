@@ -1,6 +1,6 @@
 const { SlashCommandBuilder } = require('discord.js');
 
-const { getServerData, setGlobalVariable, getClient } = require('../../global.js');
+const { getServerData, setGlobalVariable, getClient, LoopType } = require('../../global.js');
 const { errorEmbed, successEmbed } = require('../../helpers/embeds.js');
 const Log = require('../../helpers/fancyLogs/log.js');
 
@@ -49,7 +49,7 @@ module.exports = {
             setGlobalVariable('firstCommandTimestamp', null);
             setGlobalVariable('nowPlayingMessage', null);
             setGlobalVariable('eqEffect', null);
-            setGlobalVariable('loop', globals.LoopType.NO_LOOP);
+            setGlobalVariable('loop', LoopType.NO_LOOP);
             setGlobalVariable('shuffle', false);
             setGlobalVariable('isSkipped', false);
             setGlobalVariable('schedulerPlaying', false);

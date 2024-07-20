@@ -2,6 +2,7 @@ const YouTube = require('youtube-sr').default;
 const ytsr = require("ytsr");
 const { errorEmbed, songEmbed } = require("./embeds");
 const { setGlobalVariable, addToQueue } = require("../global");
+const Log = require('./fancyLogs/log');
 
 module.exports = {
    processTitleSong: async function(title, interaction) {

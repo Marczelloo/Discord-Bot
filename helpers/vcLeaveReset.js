@@ -5,11 +5,11 @@ const { getServerData, clearGlobalVariables } = require('../global.js');
 const path = require('path');
 const Log = require('./fancyLogs/log.js');
 
-function vcLeaveReset(guildId)
+async function vcLeaveReset(guildId)
 {
     if(!getServerData(guildId).player == null)
     {
-        getServerData(guildId).player.stop();
+        await getServerData(guildId).player.stop();
     }
 
     clearGlobalVariables(guildId);
