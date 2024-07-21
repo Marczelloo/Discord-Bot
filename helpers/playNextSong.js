@@ -7,6 +7,7 @@ const { downloadYtdlp } = require("./downloadYtdlp");
 const { downloadYtdl } = require("./downloadYtdl");
 const Log = require('./fancyLogs/log');
 const { default: YouTube } = require('youtube-sr');
+const fs = require('fs');
 
 async function playNextSong(interaction, 
    connection,
@@ -72,7 +73,12 @@ async function playNextSong(interaction,
 
    const nowPlayingEmbed = playerEmbed(song.title, song.url, song.image, song.artist, song.artist_url);
 
-   outputFilePath = __dirname + "/../temp/" + "output_" + interaction.guild.id + ".ogg";
+   const tempFolderPath = __dirname + "/../temp/";
+   if (!fs.existsSync(tempFolderPath)) 
+   {
+      fs.mkdirSync(tempFolderPath);
+   }
+   outputFilePath = tempFolderPath + "output_" + interaction.guild.id + ".ogg";
 
    if(getServerData(interaction.guild.id).ageRestricted)
       downloadYtdlp(interaction, song.url, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);

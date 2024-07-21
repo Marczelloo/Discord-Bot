@@ -1,4 +1,6 @@
 const path = require("path");
+const fs = require('fs');
+const path = require('path');
 
 const LogTextColor =  {
    BLACK: '\x1b[30m',
@@ -224,24 +226,30 @@ class Log {
 
    static saveLogsToFile(log) {
       const logWithoutFormatting = log.replace(/\x1b\[\d+m/g, '');
-      try
+      try 
       {
-         const fs = require('fs');
-         const path = require('path');
          const logsPath = path.resolve(__dirname, "../../logs/logs.txt");
-         
+         const logsFolder = path.dirname(logsPath);
+
+         if (!fs.existsSync(logsFolder)) 
+         {
+            fs.mkdirSync(logsFolder, { recursive: true });
+         }
+
          if (!fs.existsSync(logsPath)) 
          {
-            fs.writeFileSync(logsPath, '');
+            fs.writeFileSync(logsPath, logWithoutFormatting + '\n');
          }
-         
-         fs.appendFileSync(logsPath, logWithoutFormatting + '\n');
-      }
-      catch(error)
+         else
+         {
+            fs.appendFileSync(logsPath, logWithoutFormatting + '\n');
+         }
+      } 
+      catch (error) 
       {
          Log.error("Error saving logs to file", error);
       }
-  }
+   }
 }
 
 
