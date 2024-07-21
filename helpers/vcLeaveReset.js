@@ -17,7 +17,7 @@ async function vcLeaveReset(guildId)
             const filePath = path.resolve(__dirname, "../temp/output_" + guildId + ".ogg");
             const filePathEQ = path.resolve(__dirname, "../temp/outputEQ_" + guildId + ".ogg");
 
-            while(getServerData(guildId).player.state.status !== AudioPlayerStatus.Idle)
+            while(getServerData(guildId).player != null && getServerData(guildId).player.state.status !== AudioPlayerStatus.Idle)
             {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
