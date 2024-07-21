@@ -1,2 +1,0 @@
- ▌ERROR        9:24:18 AM █ vcLeaveReset.js █ 857906909930455070      Error outputEQ.ogg does noe exist Error: ENOENT: no such file or directory, access 'E:\wszystko\Visual Studio Code\BeatBuddy-Discord-Bot\temp\outputEQ_857906909930455070.ogg'
- ▌ERROR        9:24:18 AM █ vcLeaveReset.js █ 857906909930455070      Error deleting output.ogg Error: EBUSY: resource busy or locked, unlink 'E:\wszystko\Visual Studio Code\BeatBuddy-Discord-Bot\temp\output_857906909930455070.ogg'
