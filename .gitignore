@@ -6,5 +6,8 @@ config.json
 .env
 .ogg
 temp
+logs
+.txt
 commands/music/schedulers.json
+
 # END: abpxx6d04wxr
