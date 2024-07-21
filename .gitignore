@@ -5,7 +5,9 @@ config.json
 .eslintrc.json
 .env
 .ogg
-commands/music/output.ogg
-commands/music/eqOutput.ogg
+temp
+logs
+.txt
 commands/music/schedulers.json
+
 # END: abpxx6d04wxr

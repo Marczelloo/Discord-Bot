@@ -1,10 +1,11 @@
-const { Events, ActivityType } = require('discord.js');
+const { Events } = require('discord.js');
+const Log = require('../helpers/fancyLogs/log');
 
 module.exports = {
     name: Events.ClientReady,
     once: true,
     execute(client) {
-        console.log(`Ready! Logged in as ${client.user.tag}`);
+        Log.success(`Logged in as ${client.user.tag}`);
 
         //client.user.setStatus('dnd');
         client.user.setActivity(`/help for more information`);

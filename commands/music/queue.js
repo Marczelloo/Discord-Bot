@@ -1,8 +1,11 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { AudioPlayerStatus } = require('@discordjs/voice');
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { ButtonStyle, ActionRowBuilder } = require('discord.js');
 
-const globals = require('../../global.js');
+const { getServerData, getClient } = require('../../global.js');
+const { createButton } = require('../../helpers/createButton.js');
+const { errorEmbed } = require('../../helpers/embeds.js');
+const Log = require('../../helpers/fancyLogs/log.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -16,172 +19,152 @@ module.exports = {
 
     async execute(interaction) 
     {
-        const guild = interaction.guild;
-        if (!guild) 
-        {
-            console.error('Guild is undefined');
-            return;
-        }
-
-        const buttonRow = new ActionRowBuilder()
-
-        const nextPageButton = new ButtonBuilder()
-        .setCustomId('next-button')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('1198248590087307385');
-
-        const previousPageButton = new ButtonBuilder()
-        .setCustomId('previous-button')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('1198248587369386134')
-
-        buttonRow.addComponents(previousPageButton, nextPageButton);
-        
-        const botMember = await guild.members.fetch(globals.client.user.id);
-        const botVoiceChannel = botMember.voice.channel;
-
-        const memberVoiceChannel = interaction.member.voice.channel;
-    
-        if(botVoiceChannel && memberVoiceChannel && botVoiceChannel.id !== memberVoiceChannel.id)
-        {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("You must be in the same voice channel as bot to see queue!")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
-            return;           
-        }
-
-        if(globals.player == null || globals.player.state.status !== AudioPlayerStatus.Playing)
-        {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("There is no song playing")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
-            return;
-        }
-
-        const queue = globals.queue;
-        let page = interaction.options.getInteger('page') || 1;
-        const itemsPerPage = 20;
-        const pages = Math.ceil(queue.length / itemsPerPage);
-
-        if(queue.length == 0)
-        {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("Queue is empty")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
-            return;
-        }
-        
-        if(page > pages || page < 1)
-        {
-            const embed = new EmbedBuilder()
-            .setColor(0xff0000)
-            .setTitle("Invalid page number")
-            .setTimestamp()
-
-            interaction.reply({ embeds: [embed] });
-            return;
-        }
-
-        const updateFileds = () => {
-            const start = (page - 1) * itemsPerPage;
-            const end = start + itemsPerPage;
-            let fields = [];
-
-            for(let i = start; i < end; i++) 
-            {
-                const song = queue[i];
-                if(song) 
-                {
-                    fields.push({ name: `${i + 1}. ${song.title}`, value: song.url });
-                }
-            }
-
-            return fields;
-        }
-
-        const embed = new EmbedBuilder()
-        .setColor(0x00ff00)
-        .setTitle(`Queue (Page ${page}/${pages})`)
-        .addFields(updateFileds())
-        .setTimestamp();
-
-        if(pages === 1)
-        {
-            await interaction.reply({ embeds: [embed]});
-            return;
-        }
-
-        if(page == 1)
-        {
-            previousPageButton.setDisabled(true);
-        }
-
-        if(page == pages)
-        {
-            nextPageButton.setDisabled(true);
-        }
-        
-        await interaction.reply({ embeds: [embed], components: [buttonRow] });
-        
-        const filter = i => i.user.id === interaction.user.id;
         try
         {
-            const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
-            collector.on('collect', async(confirmation) => {
-                if(confirmation.customId === 'next-button')
+            const guild = interaction.guild;
+            if (!guild) 
+            {
+                Log.error('Guild is undefined', null, interaction.guild.id, interaction.guild.name);
+                return;
+            }
+    
+            const buttonRow = new ActionRowBuilder()
+    
+            const nextPageButton = createButton('next-button', ButtonStyle.Secondary, '1198248590087307385');
+            const previousPageButton = createButton('previous-button', ButtonStyle.Secondary, '1198248587369386134');
+    
+            buttonRow.addComponents(previousPageButton, nextPageButton);
+            
+            const botMember = await guild.members.fetch(getClient().user.id);
+            const botVoiceChannel = botMember.voice.channel;
+    
+            const memberVoiceChannel = interaction.member.voice.channel;
+        
+            if(botVoiceChannel && memberVoiceChannel && botVoiceChannel.id !== memberVoiceChannel.id)
+            {
+                interaction.reply({ embeds: [errorEmbed("You must be in the same voice channel as bot to see queue!")] });
+                return;           
+            }
+    
+            if(getServerData(interaction.guild.id).player == null || getServerData(interaction.guild.id).player.state.status !== AudioPlayerStatus.Playing)
+            {
+                interaction.reply({ embeds: [errorEmbed("There is no song playing")] });
+                return;
+            }
+    
+            const queue = getServerData(interaction.guild.id).queue;
+            let page = interaction.options.getInteger('page') || 1;
+            const itemsPerPage = 20;
+            const pages = Math.ceil(queue.length / itemsPerPage);
+    
+            if(queue.length == 0)
+            {
+                interaction.reply({ embeds: [errorEmbed("Queue is empty")] });
+                return;
+            }
+            
+            if(page > pages || page < 1)
+            {
+                interaction.reply({ embeds: [errorEmbed("Invalid page number")] });
+                return;
+            }
+    
+            const updateFileds = () => {
+                const start = (page - 1) * itemsPerPage;
+                const end = start + itemsPerPage;
+                let fields = [];
+    
+                for(let i = start; i < end; i++) 
                 {
-                    if(page + 1 <= pages)
+                    const song = queue[i];
+                    if(song) 
                     {
-                        page++;
-                        embed.setTitle(`Queue (Page ${page}/${pages})`)
-                        embed.setFields(updateFileds());
-
-                        if(page != 1)
-                        {
-                            previousPageButton.setDisabled(false);
-                        }
-                        else
-                        {
-                            previousPageButton.setDisabled(true);
-                        }
-
-                        await confirmation.update({ embeds: [embed], components: [buttonRow] });
+                        fields.push({ name: `${i + 1}. ${song.title}`, value: song.url });
                     }
                 }
-                else if(confirmation.customId === 'previous-button')
-                {
-                    if(page - 1 >= 1)
+    
+                return fields;
+            }
+    
+            const embed = new EmbedBuilder()
+            .setColor(0x00ff00)
+            .setTitle(`Queue (Page ${page}/${pages})`)
+            .addFields(updateFileds())
+            .setTimestamp();
+    
+            if(pages === 1)
+            {
+                await interaction.reply({ embeds: [embed]});
+                return;
+            }
+    
+            if(page == 1)
+            {
+                previousPageButton.setDisabled(true);
+            }
+    
+            if(page == pages)
+            {
+                nextPageButton.setDisabled(true);
+            }
+            
+            await interaction.reply({ embeds: [embed], components: [buttonRow] });
+            
+            const filter = i => i.user.id === interaction.user.id;
+            try
+            {
+                const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
+                collector.on('collect', async(confirmation) => {
+                    if(confirmation.customId === 'next-button')
                     {
-                        page--;
-                        embed.setTitle(`Queue (Page ${page}/${pages})`)
-                        embed.setFields(updateFileds());
-
-                        if(page != pages)
+                        if(page + 1 <= pages)
                         {
-                            nextPageButton.setDisabled(false);
+                            page++;
+                            embed.setTitle(`Queue (Page ${page}/${pages})`)
+                            embed.setFields(updateFileds());
+    
+                            if(page != 1)
+                            {
+                                previousPageButton.setDisabled(false);
+                            }
+                            else
+                            {
+                                previousPageButton.setDisabled(true);
+                            }
+    
+                            await confirmation.update({ embeds: [embed], components: [buttonRow] });
                         }
-                        else
-                        {
-                            nextPageButton.setDisabled(true);
-                        }
-
-                        await confirmation.update({ embeds: [embed], components: [buttonRow] });
                     }
-                }
-            });
+                    else if(confirmation.customId === 'previous-button')
+                    {
+                        if(page - 1 >= 1)
+                        {
+                            page--;
+                            embed.setTitle(`Queue (Page ${page}/${pages})`)
+                            embed.setFields(updateFileds());
+    
+                            if(page != pages)
+                            {
+                                nextPageButton.setDisabled(false);
+                            }
+                            else
+                            {
+                                nextPageButton.setDisabled(true);
+                            }
+    
+                            await confirmation.update({ embeds: [embed], components: [buttonRow] });
+                        }
+                    }
+                });
+            }
+            catch(error)
+            {
+                Log.error("Collector failed", error, interaction.guild.id, interaction.guild.name);
+            }
         }
-        catch(e)
+        catch(error)
         {
-            console.error(e);
+            Log.error("Queue command failed", error, interaction.guild.id, interaction.guild.name);
         }
     }
 }

@@ -1,7 +1,9 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { AudioPlayerStatus } = require('@discordjs/voice');
 
-const globals = require('../../global.js');
+const { getServerData, setGlobalVariable, getClient } = require('../../global.js');
+const { errorEmbed, successEmbed } = require('../../helpers/embeds.js');
+const Log = require('../../helpers/fancyLogs/log.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -15,73 +17,62 @@ module.exports = {
         
         async execute(interaction)
         {
-            const guild = interaction.guild;
-            if (!guild) 
+            try
             {
-                console.error('Guild is undefined');
-                return;
-            }
-            
-            const botMember = await guild.members.fetch(globals.client.user.id);
-            const botVoiceChannel = botMember.voice.channel;
-
-            const memberVoiceChannel = interaction.member.voice.channel;
-        
-            if(botVoiceChannel && memberVoiceChannel && botVoiceChannel.id !== memberVoiceChannel.id)
-            {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("You must be in the same voice channel as bot to skip song!")
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
-                return;           
-            }
-
-            if(globals.player == null || globals.player.state.status !== AudioPlayerStatus.Playing)
-            {
-                const embed = new EmbedBuilder()
-                .setColor(0xff0000)
-                .setTitle("Player is not active! Playe song before changing volume!")   
-                .setTimestamp()
-
-                interaction.reply({ embeds: [embed] });
-                return;
-            }
-
-            const volume = interaction.options.getNumber('volume');
-
-            const changeVolume = async (volume, voiceCom) => {
-                if(volume < 0 || volume > 500)
+                const guild = interaction.guild;
+                if (!guild) 
                 {
-                    const embed = new EmbedBuilder()
-                    .setColor(0xff0000)
-                    .setTitle("Volume must be between 0 and 100!")
-                    .setTimestamp()
+                    Log.error('Guild is undefined', null, interaction.guild.id, interaction.guild.name);
+                    return;
+                }
+                
+                const botMember = await guild.members.fetch(getClient().user.id);
+                const botVoiceChannel = botMember.voice.channel;
     
-                    interaction.reply({ embeds: [embed] });
+                const memberVoiceChannel = interaction.member.voice.channel;
+            
+                if(botVoiceChannel && memberVoiceChannel && botVoiceChannel.id !== memberVoiceChannel.id)
+                {
+                    interaction.reply({ embeds: [errorEmbed("You must be in the same voice channel as a bot to skip song!")] });
+                    return;           
+                }
+    
+                if(getServerData(interaction.guild.id).player == null || getServerData(interaction.guild.id).player.state.status !== AudioPlayerStatus.Playing)
+                {
+                    interaction.reply({ embeds: [errorEmbed("Player is not active! Play song before changing volume!")] });
                     return;
                 }
     
-                globals.resource.volume.setVolume(volume / 100);
+                const volume = interaction.options.getNumber('volume');
     
-                const embed = new EmbedBuilder()
-                .setColor(0x00ff00)
-                .setTitle(`Volume set to ${volume}`)
-                .setTimestamp()
+                const changeVolume = async (volume, voiceCom) => {
+                    if(volume < 0 || volume > 500)
+                    {
+                        interaction.reply({ embeds: [errorEmbed("Volume must be between 0 and 100!")] });
+                        return;
+                    }
+        
+                    getServerData(interaction.guild.id).resource.volume.setVolume(volume / 100);
+        
+                    if(voiceCom)
+                    {
+                        globals.commandChannel.send({ embeds: [successEmbed(`Volume set to ${volume}`)] });
+                    }
+                    else
+                    {
+                        await interaction.reply({ embeds: [successEmbed(`Volume set to ${volume}`)] });
+                    }
     
-                if(voiceCom)
-                {
-                    globals.commandChannel.send({ embeds: [embed] });
                 }
-                else
-                {
-                    await interaction.reply({ embeds: [embed] });
-                }
+                module.exports = changeVolume;
+    
+                Log.info("Changing volume", null, interaction.guild.id, interaction.guild.name);
 
+                changeVolume(volume, false)    
             }
-            module.exports = changeVolume;
-
-            changeVolume(volume, false)        
+            catch(error)
+            {
+                Log.error("Volume command failed", error, interaction.guild.id, interaction.guild.name);
+            }  
         }
 }

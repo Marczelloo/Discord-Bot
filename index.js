@@ -1,16 +1,19 @@
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js');
+require('dotenv').config();
 
-const { token } = require('./config.json');
-const globals = require('./global.js');
+const { Client, Collection, GatewayIntentBits } = require('discord.js');
+
+const token = process.env.TOKEN;
+
+const { setGlobalVariable, setClient } = require('./global.js');
 
 const fs = require('fs');
 const path = require('path');
 const cron = require('node-cron');
 
-const vcLeaveReset = require('./commands/music/vcLeaveReset.js');
-const { schedulePlay }  = require('./commands/music/playScheduler.js');
+const vcLeaveReset = require('./helpers/vcLeaveReset.js');
+const { schedulePlay }  = require('./helpers/playScheduler.js');
+const Log = require('./helpers/fancyLogs/log.js');
 
-// Create a new client instance
 const client = new Client({ intents: [GatewayIntentBits.Guilds, 
 	GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildMembers, 
 	GatewayIntentBits.GuildPresences, 
@@ -33,10 +36,11 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds,
 	GatewayIntentBits.MessageContent,
 	GatewayIntentBits.GuildScheduledEvents, 
 	GatewayIntentBits.AutoModerationConfiguration, 
-	GatewayIntentBits.AutoModerationExecution ]});
+	GatewayIntentBits.AutoModerationExecution ]
+});
 
 client.commands = new Collection();
-globals.client = client;
+setClient(client);
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
@@ -47,10 +51,13 @@ for(const folder of commandFolders){
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
 	
-		if('data' in command && 'execute' in command){
+		if('data' in command && 'execute' in command)
+		{
 			client.commands.set(command.data.name, command);
-		} else {
-			console.log(`[WARNING] The command at ${filePath} is missing a require "data" or "execute" property`);
+		} 
+		else 
+		{
+			Log.warning(`The command at ${filePath} is missing a required "data" or "execute" property.`);
 		}
 	}
 }
@@ -70,33 +77,32 @@ for(const file of eventsFiles){
 }
 
 client.on('voiceStateUpdate', (oldState, newState) => {
-	
-	if(oldState.member.user.id === client.user.id && newState.channelId === null)
-	{
-		vcLeaveReset();
+	if (oldState.member.user.id === client.user.id && newState.channelId === null) {
+		Log.info('Bot left the voice channel:', oldState.channel, newState.guild.name, newState.guild.id);
+		const guild = newState.guild;
+		vcLeaveReset(guild.id);
 	}
-})
+});
 
 client.on('voiceStateUpdate', (oldState, newState) => {
-  const oldChannel = oldState.channel;
-  const newChannel = newState.channel;
+	const oldChannel = oldState.channel;
+	const newChannel = newState.channel;
+	const guild = newState.guild;
 
-  if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
-    const oldMembers = oldChannel.members.size;
-    const newMembers = newChannel.members.size;
+	if (oldChannel && newChannel && oldChannel.id !== newChannel.id) {
+		const oldMembers = oldChannel.members.size;
+		const newMembers = newChannel.members.size;
 
-    if (oldMembers !== newMembers) {
-		if(newMembers === 1)
-		{
+		if (oldMembers !== newMembers && newMembers === 1) {
+			Log.info('Bot is alone in the voice channel:', newChannel.name, guild.name, guild.id);
+			Log.info('Bot will leave the voice channel in 60 seconds:', newChannel.name, guild.name, guild.id);
 			setTimeout(() => {
-				if(newChannel.members.size === 1)
-				{
-					vcLeaveReset();
+				if (newChannel.members.size === 1) {
+					vcLeaveReset(guild.id);
 				}
 			}, 60000);
 		}
 	}
-  }
 });
 
 
@@ -109,31 +115,52 @@ try
 	{
 		if(data.guildId === 'default')
 		{
-			globals.schedulers = data.schedulers;
+			setGlobalVariable(data.guild.id, 'schedulers', data.schedulers);
 		}
 	}
 }
 catch (err)
 {
-	console.error(err);
+	Log.error('Failed to read schedulers.json file', err);
+	Log.info('Creating a new schedulers.json file');
 	fs.writeFileSync(schedulersPath, '[]', 'utf8');
 }
 
 
 cron.schedule('0 9 * * *', function() {
-	console.log("Scheduler on 9:00");
-    schedulePlay('morning');
+	Log.info("Scheduler on 9:00");
+	schedulePlay('morning');
 }, {
     timezone: 'Europe/Warsaw'
 });
 
 
 cron.schedule('37 21 * * *', function() {
-	console.log("Scheduler on 21:37");
+	Log.info("Scheduler on 21:37");
 	schedulePlay('evening');
 }, {
 	timezone: 'Europe/Warsaw'
 });
 
-client.login(token);
+const maxRetries = 3;
+let currentAttempt = 0;
+
+function connectClient() {
+    client.login(token)
+        .then(() => {
+				Log.success('Successfully connected to Discord!');
+        })
+        .catch(err => {
+				Log.error('Failed to connect to Discord:', err);
+            if (currentAttempt < maxRetries) {
+                currentAttempt++;
+					 Log.warning(`Attempting to reconnect... Attempt ${currentAttempt}/${maxRetries}`);
+                setTimeout(connectClient, 5000);
+            } else {
+					Log.error('Failed to connect to Discord after several attempts.');
+            }
+        });
+}
+
+connectClient();
 

@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const Log = require('../../helpers/fancyLogs/log');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -21,6 +22,7 @@ module.exports = {
 
     async execute(interaction)
     {
+        Log.info("Help command", null, interaction.guild.id, interaction.guild.name);
         const category = interaction.options.getString('category');
         let index = 0;
         const maxIndex = 6;
@@ -214,7 +216,7 @@ module.exports = {
                         }
                         catch(e)
                         {
-                            console.error(e);
+                            Log.error("Error updating message: ", e, interaction.guild.id, interaction.guild.name);
                         }
                         break;
                     case 1:
@@ -227,7 +229,7 @@ module.exports = {
                         }
                         catch(e)
                         {
-                            console.error(e);
+                            Log.error("Error updating message: ", e, interaction.guild.id, interaction.guild.name);
                         }
                         break;
                     case 2:
@@ -240,7 +242,7 @@ module.exports = {
                         }
                         catch(e)
                         {
-                            console.error(e);
+                            Log.error("Error updating message: ", e, interaction.guild.id, interaction.guild.name);
                         }
                         break;
                     case 3:
@@ -253,7 +255,7 @@ module.exports = {
                         }
                         catch(e)
                         {
-                            console.error(e);
+                            Log.error("Error updating message: ", e, interaction.guild.id, interaction.guild.name);
                         }
                         break;
                     case 4:
@@ -266,7 +268,7 @@ module.exports = {
                         }
                         catch(e)
                         {
-                            console.error(e);
+                            Log.error("Error updating message: ", e, interaction.guild.id, interaction.guild.name);
                         }
                         break;
                     case 5:
@@ -279,7 +281,7 @@ module.exports = {
                         }
                         catch(e)
                         {
-                            console.error(e);
+                            Log.error("Error updating message: ", e, interaction.guild.id, interaction.guild.name);
                         }
                         break;
                     case 6:
@@ -292,7 +294,7 @@ module.exports = {
                         }
                         catch(e)
                         {
-                            console.error(e);
+                            Log.error("Error updating message: ", e, interaction.guild.id, interaction.guild.name);
                         }
 
                         break;
@@ -301,9 +303,8 @@ module.exports = {
         }
         catch(e)
         {
-            console.error(e);
+            Log.error("Error creating collector: ", e, interaction.guild.id, interaction.guild.name);
 
         }
-        
     }
 }
