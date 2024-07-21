@@ -98,8 +98,6 @@ function clearGlobalVariables(guildId) {
     server.queue = [];
     server.originalQueue = [];
     server.playedSongs = [];
-    server.firstCommandTimestamp = null;
-    server.commandChannel = null;
     server.playEarlier = false;
     server.ageRestricted = false;
     server.player = null;
@@ -109,13 +107,11 @@ function clearGlobalVariables(guildId) {
     server.isSkipped = false;
     server.loop = LoopType.NO_LOOP;
     server.shuffle = false;
-    server.nowPlayingMessage = null;
     server.schedulerPlaying = false;
     server.timeout = null;
     server.autoplay = false;
     server.spotify_token = null;
     server.spotify_token_expires = null;
-    server.playerMessage = null;
 }
 
 function getClient() {

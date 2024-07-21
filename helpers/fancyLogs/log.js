@@ -121,6 +121,8 @@ class Log {
       formattedMessage += `${LogBackgroundColor.YELLOW} ${reset}`;
       formattedMessage += `${bright}${LogTextColor.YELLOW} ${spacerHalf} ${message}${arg ? ` ${arg}` : ''}${reset}`;
       console.log(formattedMessage);
+
+      Log.saveLogsToFile(formattedMessage);
    }
 
    static error(message, arg = null, ...additionalInfo) {
@@ -144,6 +146,8 @@ class Log {
       formattedMessage += `${LogBackgroundColor.RED} ${reset}`;
       formattedMessage += `${bright}${LogTextColor.RED} ${spacerHalf} ${message}${arg ? ` ${arg}` : ''}${reset}`;
       console.log(formattedMessage);
+
+      Log.saveLogsToFile(formattedMessage);
    }
 
    static progress(message, progress, ...additionalInfo) {
@@ -156,10 +160,12 @@ class Log {
       const progressBarLength = 20;
       let progressBar;
    
-      if (progress === 100) {
-         // Directly set the progress bar to be fully filled
+      if (progress === 100) 
+      {
          progressBar = ProgressBarBlocks[8].repeat(progressBarLength);
-      } else {
+      } 
+      else 
+      {
          const totalBlocks = progressBarLength * 8; // Total number of sub-blocks
          const filledBlocks = Math.floor(totalBlocks * progress / 100);
          const fullBlockCount = Math.floor(filledBlocks / 8); // Full blocks
@@ -203,7 +209,8 @@ class Log {
       Error.prepareStackTrace = (_, stack) => stack;
       const error = new Error();
       const currentFile = error.stack.shift().getFileName();
-      while (error.stack.length) {
+      while (error.stack.length) 
+      {
           const stackFrame = error.stack.shift();
           const fileName = stackFrame.getFileName();
           if (fileName !== currentFile) {
@@ -213,6 +220,27 @@ class Log {
       }
       Error.prepareStackTrace = originalPrepareStackTrace;
       return "unknown";
+  }
+
+   static saveLogsToFile(log) {
+      const logWithoutFormatting = log.replace(/\x1b\[\d+m/g, '');
+      try
+      {
+         const fs = require('fs');
+         const path = require('path');
+         const logsPath = path.resolve(__dirname, "../../logs/logs.txt");
+         
+         if (!fs.existsSync(logsPath)) 
+         {
+            fs.writeFileSync(logsPath, '');
+         }
+         
+         fs.appendFileSync(logsPath, logWithoutFormatting + '\n');
+      }
+      catch(error)
+      {
+         Log.error("Error saving logs to file", error);
+      }
   }
 }
 

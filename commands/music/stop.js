@@ -3,6 +3,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const { getServerData, setGlobalVariable, getClient, LoopType } = require('../../global.js');
 const { errorEmbed, successEmbed } = require('../../helpers/embeds.js');
 const Log = require('../../helpers/fancyLogs/log.js');
+const vcLeaveReset = require('../../helpers/vcLeaveReset.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -41,20 +42,8 @@ module.exports = {
                 interaction.reply({ embeds: [errorEmbed("Player is not active!")] });
                 return;
             }
-    
-            setGlobalVariable('player', null);
-            setGlobalVariable('resource', null);
-            setGlobalVariable('queue', []);
-            setGlobalVariable('playedSongs', []);
-            setGlobalVariable('firstCommandTimestamp', null);
-            setGlobalVariable('nowPlayingMessage', null);
-            setGlobalVariable('eqEffect', null);
-            setGlobalVariable('loop', LoopType.NO_LOOP);
-            setGlobalVariable('shuffle', false);
-            setGlobalVariable('isSkipped', false);
-            setGlobalVariable('schedulerPlaying', false);
-            setGlobalVariable('timeout', null);
-            setGlobalVariable('autoplay', false);
+
+            vcLeaveReset(interaction.guild.id);
 
             Log.info('Player stopped and queue cleared', null, interaction.guild.id, interaction.guild.name);
     
