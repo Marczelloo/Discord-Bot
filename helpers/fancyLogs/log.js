@@ -1,6 +1,5 @@
 const path = require("path");
 const fs = require('fs');
-const path = require('path');
 
 const LogTextColor =  {
    BLACK: '\x1b[30m',

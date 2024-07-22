@@ -12,67 +12,110 @@ module.exports = {
       Log.info("Updating now playing message", null, interaction.guild.id, interaction.guild.name);
       await interaction.channel.messages.fetch(getServerData(interaction.guild.id).nowPlayingMessage)
       .then(async message => {
-         if (message) message.delete().catch(error => {
-            if(error.code === 10008)
-            {
-               Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
-               getServerData(interaction.guild.id).nowPlayingMessage = null;
-               sendNowPlayingMessage(interaction, nowPlayingEmbed, playingRow, pausedRow);
-            }
-            else
-            {
-               Log.error("Error deleting now playing message: ", error, interaction.guild.id, interaction.guild.name);
-            }
-         });
-
-         try
+         if(!message)
+         { 
+            setGlobalVariable(interaction.guild.id, "coll", sendNowPlayingMessage(interaction, nowPlayingEmbed, playingRow, pausedRow)
+            .then(message => {
+               Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
+               setGlobalVariable(interaction.guild.id, "nowPlayingMessage", message.id);
+               setGlobalVariable(interaction.guild.id, "playerMessage", message)
+            }))
+            .catch(error => {
+               Log.error("Error sending now playing message: ", error, interaction.guild.id, interaction.guild.name);
+            })
+         }
+         else
          {
-            if(getServerData(interaction.guild.id).player.AudioPlayerStatus === AudioPlayerStatus.Paused)
-            {
-               setGlobalVariable(interaction.guild.id, "coll", 
-               await interaction.channel.send({
-                  embeds: [ nowPlayingEmbed ],
-                  components: [ pausedRow ],
-                  position: 'end'
-               })
-               .then(nowPlayingMessage => {
+            setGlobalVariable(interaction.guild.id, "coll", await sendNowPlayingMessage(interaction, nowPlayingEmbed, playingRow, pausedRow)
+            .then(async () => {
+               await message.delete()
+               .then(async () => {
                   Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
-                  setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
-                  setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
-               })
-               .cactch(error => {
-                  Log.error("Error updating paused message: ", error, interaction.guild.id, interaction.guild.name);
-               }))
-            }
-            else
-            {
-               setGlobalVariable(interaction.guild.id, "coll", 
-               await interaction.channel.send({
-                  embeds: [ nowPlayingEmbed ],
-                  components: [ playingRow ],
-                  position: 'end'
-               })
-               .then(nowPlayingMessage => {
-                  Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
-                  setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
-                  setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
                })
                .catch(error => {
-                  Log.error("Error updating playing message: ", error, interaction.guild.id, interaction.guild.name);
-               }))
-            }
+                  Log.error("Error deleting now playing message: ", error, interaction.guild.id, interaction.guild.name);
+               })
+            })
+            .catch(error => {
+               Log.error("Error sending now playing message: ", error, interaction.guild.id, interaction.guild.name);
+            }))
+
+            // message.edit({
+            //    embeds: [ nowPlayingEmbed ],
+            //    components: getServerData(interaction.guild.id).player.AudioPlayerStatus === AudioPlayerStatus.Paused ? [ pausedRow ] : [ playingRow ],
+            //    position: 'end'
+            // })
+            // .then(message => {
+            //    Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
+            //    setGlobalVariable(interaction.guild.id, "nowPlayingMessage", message.id);
+            //    setGlobalVariable(interaction.guild.id, "playerMessage", message)
+            // })
+            // .catch(error => {
+            //    Log.error("Error updating now playing message: ", error, interaction.guild.id, interaction.guild.name);
+            // })
          }
-         catch(error)
-         {
-            if(error.code === 10008)
-            {
-               Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
-            }
-            else
-            {
-               Log.error("Error updating now playing message: ", error, interaction.guild.id, interaction.guild.name);
-            }
-         }
+
+
+         // if (message) message.delete().catch(error => {
+         //    if(error.code === 10008)
+         //    {
+         //       Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
+         //       getServerData(interaction.guild.id).nowPlayingMessage = null;
+         //    }
+         //    else
+         //    {
+         //       Log.error("Error deleting now playing message: ", error, interaction.guild.id, interaction.guild.name);
+         //    }
+         // });
+
+         // try
+         // {
+         //    if(getServerData(interaction.guild.id).player.AudioPlayerStatus === AudioPlayerStatus.Paused)
+         //    {
+         //       setGlobalVariable(interaction.guild.id, "coll", 
+         //       await interaction.channel.send({
+         //          embeds: [ nowPlayingEmbed ],
+         //          components: [ pausedRow ],
+         //          position: 'end'
+         //       })
+         //       .then(nowPlayingMessage => {
+         //          Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
+         //          setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
+         //          setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
+         //       })
+         //       .catch(error => {
+         //          Log.error("Error updating paused message: ", error, interaction.guild.id, interaction.guild.name);
+         //       }))
+         //    }
+         //    else
+         //    {
+         //       setGlobalVariable(interaction.guild.id, "coll", 
+         //       await interaction.channel.send({
+         //          embeds: [ nowPlayingEmbed ],
+         //          components: [ playingRow ],
+         //          position: 'end'
+         //       })
+         //       .then(nowPlayingMessage => {
+         //          Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
+         //          setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
+         //          setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
+         //       })
+         //       .catch(error => {
+         //          Log.error("Error updating playing message: ", error, interaction.guild.id, interaction.guild.name);
+         //       }))
+         //    }
+         // }
+         // catch(error)
+         // {
+         //    if(error.code === 10008)
+         //    {
+         //       Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
+         //    }
+         //    else
+         //    {
+         //       Log.error("Error updating now playing message: ", error, interaction.guild.id, interaction.guild.name);
+         //    }
+         // }
       })
       .catch(error => {
          if(error.code === 10008)

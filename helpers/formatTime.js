@@ -3,7 +3,7 @@ module.exports = {
       const lengthInSeconds = length;
       const minutes = Math.floor(lengthInSeconds / 60);
       const seconds = lengthInSeconds % 60;
-      const formattedLength = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;   
+      let formattedLength = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;   
 
       if(minutes >= 60) {
          const hours = Math.floor(minutes / 60);

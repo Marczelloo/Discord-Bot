@@ -40,15 +40,19 @@ async function playNextSong(interaction,
          Log.info("Trying to get spotify song info with ytsr", null, interaction.guild.id, interaction.guild.name);
          const video = await ytsr(getServerData(interaction.guild.id).queue[0].title + " " + getServerData(interaction.guild.id).queue[0].artist, { limit: 1});
          const videoInfo = video.items[0];
+
+         console.log(videoInfo);
                
          const song = getServerData(interaction.guild.id).queue[0];
          song.yt_url = videoInfo.url;
          song.length = videoInfo.duration;
          song.artist_url = videoInfo.author.bestAvatar.url;
+
+         setSongInQueue(interaction.guild.id, 0, song, "queue");
       }
       catch(error)
       {
-         Log.error("Error getting spotify song info ytld", error, interaction.guild.id, interaction.guild.name);
+         Log.error("Error getting spotify song info ytsr", error, interaction.guild.id, interaction.guild.name);
          Log.info("Trying to get spotify song info with YouTube.search", null, interaction.guild.id, interaction.guild.name);
          YouTube.search(getServerData(interaction.guild.id).queue[0].title + " " + getServerData(interaction.guild.id).queue[0].artist, { limit: 1 })
          .then(async video => {
@@ -65,7 +69,6 @@ async function playNextSong(interaction,
          })
       }
 
-      setSongInQueue(interaction.guild.id, 0, song, "queue");
    }
    const song = getServerData(interaction.guild.id).queue[0];
 
