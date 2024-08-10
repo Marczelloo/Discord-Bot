@@ -1,4 +1,4 @@
-const { setGlobalVariable, getServerData, unshiftQueue } = require("../../global");
+const { setGlobalVariable, getServerData, unshiftQueue, QueueType } = require("../../global");
 const Log = require("../fancyLogs/log");
 
 module.exports = {
@@ -14,7 +14,7 @@ module.exports = {
          setGlobalVariable(interaction.guild.id, "originalQueue", getServerData(interaction.guild.id).queue);
          const firstSong = getServerData(interaction.guild.id).queue.shift();
          setGlobalVariable(interaction.guild.id, "queue", getServerData(interaction.guild.id).queue.sort(() => Math.random() - 0.5));
-         unshiftQueue(interaction.guild.id, firstSong);
+         unshiftQueue(interaction.guild.id, QueueType.QUEUE, firstSong);
          Log.info("Queue shuffled", null, interaction.guild.id, interaction.guild.name);
       }
       else

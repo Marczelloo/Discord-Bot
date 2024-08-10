@@ -1,5 +1,5 @@
 const ytsr = require('ytsr');
-const { setSongInQueue, getServerData, setGlobalVariable, shiftQueue } = require("../global");
+const { setSongInQueue, getServerData, setGlobalVariable, shiftQueue, QueueType } = require("../global");
 const { formatTime } = require("./formatTime");
 const { playerEmbed } = require("./embeds");
 const { nowPlayingEmbedFields } = require("./nowPlayingEmbedFields");
@@ -45,6 +45,8 @@ async function playNextSong(interaction,
          song.yt_url = videoInfo.url;
          song.length = videoInfo.duration;
          song.artist_url = videoInfo.author.bestAvatar.url;
+
+         setSongInQueue(interaction.guild.id, 0, song, QueueType.QUEUE);
       }
       catch(error)
       {
@@ -60,7 +62,7 @@ async function playNextSong(interaction,
          .catch(error => {
             Log.error("Error getting spotify song info with Yutube.search", error, interaction.guild.id, interaction.guild.name);
             interaction.editReply({ content: "There was an error getting the song info. Please try again."})
-            shiftQueue(interaction.guild.id, 0, "queue");
+            shiftQueue(interaction.guild.id, 0, QueueType.QUEUE);
             playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);
          })
       }

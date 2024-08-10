@@ -57,7 +57,9 @@ const reset = '\x1b[0m';
 
 class Log {
    static info (message, arg, ...additionalInfo) {
-      const time = new Date().toLocaleTimeString()
+      const currentDate = new Date().toLocaleDateString();
+      const currentTime = new Date().toLocaleTimeString();
+      const time = `${currentDate} ${currentTime}`;
       const callerFile = Log.getCallerFile();
       let formattedMessage = "";
       formattedMessage += `${bright}${LogTextColor.WHITE}${LogBackgroundColor.CYAN} ${Blocks.LEFTHALF}INFO${spacer}   ${reset}`;
@@ -80,7 +82,9 @@ class Log {
    }
 
    static success(message, arg, ...additionalInfo) {
-      const time = new Date().toLocaleTimeString()
+      const currentDate = new Date().toLocaleDateString();
+      const currentTime = new Date().toLocaleTimeString();
+      const time = `${currentDate} ${currentTime}`;
       const callerFile = Log.getCallerFile();
       let formattedMessage = "";
       formattedMessage += `${bright}${LogTextColor.WHITE}${LogBackgroundColor.GREEN} ${Blocks.LEFTHALF}SUCCESS${spacer}${reset}`;
@@ -103,7 +107,9 @@ class Log {
    }
 
    static warning(message, arg = null, ...additionalInfo) {
-      const time = new Date().toLocaleTimeString();
+      const currentDate = new Date().toLocaleDateString();
+      const currentTime = new Date().toLocaleTimeString();
+      const time = `${currentDate} ${currentTime}`;
       const callerFile = Log.getCallerFile();
       let formattedMessage = "";
       formattedMessage += `${bright}${LogTextColor.WHITE}${LogBackgroundColor.YELLOW} ${Blocks.LEFTHALF}WARNING${spacer}${reset}`;
@@ -128,7 +134,9 @@ class Log {
    }
 
    static error(message, arg = null, ...additionalInfo) {
-      const time = new Date().toLocaleTimeString()
+      const currentDate = new Date().toLocaleDateString();
+      const currentTime = new Date().toLocaleTimeString();
+      const time = `${currentDate} ${currentTime}`;
       const callerFile = Log.getCallerFile();
       let formattedMessage = "";
       formattedMessage += `${bright}${LogTextColor.WHITE}${LogBackgroundColor.RED} ${Blocks.LEFTHALF}ERROR${spacer}  ${reset}`;
@@ -177,7 +185,9 @@ class Log {
          progressBar = `${ProgressBarBlocks[8].repeat(fullBlockCount)}${ProgressBarBlocks[partialBlockIndex]}${ProgressBarBlocks[0].repeat(Math.max(0, emptyBlockCount))}`;
       }
    
-      const time = new Date().toLocaleTimeString();
+      const currentDate = new Date().toLocaleDateString();
+      const currentTime = new Date().toLocaleTimeString();
+      const time = `${currentDate} ${currentTime}`;
       const callerFile = Log.getCallerFile();
    
       let formattedMessage = "";

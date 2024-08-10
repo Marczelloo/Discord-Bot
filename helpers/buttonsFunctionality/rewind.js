@@ -1,4 +1,4 @@
-const { getServerData, unshiftQueue, setGlobalVariable } = require("../../global");
+const { getServerData, unshiftQueue, setGlobalVariable, QueueType } = require("../../global");
 const Log = require("../fancyLogs/log");
 
 module.exports = {
@@ -13,7 +13,7 @@ module.exports = {
       if(getServerData(interaction.guild.id).playedSongs.length === 0)
       {
          Log.info("No previous songs in queue, rewinding to the beginning of the song", null, interaction.guild.id, interaction.guild.name);
-         unshiftQueue(interaction.guild.id, "queue");
+         unshiftQueue(interaction.guild.id, QueueType.QUEUE);
          collector.stop();
          getServerData(interaction.guild.id).player.stop();
 

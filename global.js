@@ -6,6 +6,12 @@ const LoopType = {
     LOOP_SONG: 2
 };
 
+const QueueType = {
+    QUEUE: 0,
+    ORIGINAL_QUEUE: 1,
+    PLAYED_SONGS: 2
+}
+
 const serverData = new Map();
 
 let client = null;
@@ -47,11 +53,11 @@ function setGlobalVariable(guildId, propertyName, value) {
 
 function setSongInQueue(guildId, position, song, queueType) {
     const server = getServerData(guildId);
-        if(queueType === "queue")
+        if(queueType === QueueType.QUEUE)
             server.queue[position] = song;
-        else if(queueType === "originalQueue")
+        else if(queueType === QueueType.ORIGINAL_QUEUE)
             server.originalQueue[position] = song;
-        else if(queueType === "playedSongs")
+        else if(queueType === QueueType.PLAYED_SONGS)
             server.playedSongs[position] = song;
         else 
             Log.error("Invalid queueType", null, guildId);
@@ -59,11 +65,11 @@ function setSongInQueue(guildId, position, song, queueType) {
 
 function addToQueue(guildId, song, queueType) {
     const server = getServerData(guildId);
-        if(queueType === "queue")
+        if(queueType === QueueType.QUEUE)
             server.queue.push(song);
-        else if(queueType === "originalQueue")
+        else if(queueType === QueueType.ORIGINAL_QUEUE)
             server.originalQueue.push(song);
-        else if(queueType === "playedSongs")
+        else if(queueType === QueueType.PLAYED_SONGS)
             server.playedSongs.push(song);
         else 
             Log.error("Invalid queueType", null, guildId);
@@ -71,11 +77,11 @@ function addToQueue(guildId, song, queueType) {
 
 function shiftQueue(guildId, queueType) {
     const server = getServerData(guildId);
-    if(queueType === "queue")
+    if(queueType === QueueType.QUEUE)
         server.queue.shift();
-    else if(queueType === "originalQueue")
+    else if(queueType === QueueType.ORIGINAL_QUEUE)
         server.originalQueue.shift();
-    else if(queueType === "playedSongs")
+    else if(queueType === QueueType.PLAYED_SONGS)
         server.playedSongs.shift();
     else 
         Log.error("Invalid queueType", null, guildId);
@@ -83,11 +89,11 @@ function shiftQueue(guildId, queueType) {
 
 function unshiftQueue(guildId, queueType, song = null) {
     const server = getServerData(guildId);
-    if(queueType === "queue")
+    if(queueType === QueueType.QUEUE)
         song ? server.queue.unshift(song) : server.queue.unshift();
-    else if(queueType === "originalQueue")
+    else if(queueType === QueueType.ORIGINAL_QUEUE)
         song ? server.originalQueue.unshift(song) : server.originalQueue.unshift();
-    else if(queueType === "playedSongs")
+    else if(queueType === QueueType.PLAYED_SONGS)
         song ? server.playedSongs.unshift(song) : server.playedSongs.unshift();
     else 
         Log.error("Invalid queueType", null, guildId);
@@ -131,6 +137,7 @@ module.exports = {
     unshiftQueue: unshiftQueue,
     clearGlobalVariables: clearGlobalVariables,
     LoopType: LoopType,
+    QueueType: QueueType,
     getClient: getClient,
     setClient: setClient
 };

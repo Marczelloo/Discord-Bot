@@ -1,13 +1,13 @@
 const { joinVoiceChannel, createAudioPlayer, createAudioResource, StreamType, VoiceConnectionStatus, AudioPlayerStatus } = require('@discordjs/voice');
 const { getVoiceConnection } = require('@discordjs/voice');
 
-const { getServerData, setGlobalVariable, addToQueue, shiftQueue } = require('../global.js');
+const { getServerData, setGlobalVariable, addToQueue, shiftQueue, getClient, QueueType } = require('../global.js');
 const { readFile } = require('fs').promises;
 const path = require('path');
 const Log = require('./fancyLogs/log.js');
 
 async function play(scheduleTime, interacion) {
-    const guilds = globals.client.guilds.cache;
+    const guilds = getClient().guilds.cache;
 
     Log.info("Playing schedulers", null, null, null);
     for (const guild of guilds) 
@@ -36,7 +36,7 @@ async function play(scheduleTime, interacion) {
                 {
                     Log.info("Playing morning schedulers song", null, guildId, guild[1].name);
                     filePath = path.resolve(__dirname, '/scheduleersSongs/pierwszyProgramRadia.ogg');
-                    addToQueue(guildId, { title: 'Pierwszy program radia', url: filePath, image: '', length: '' });
+                    addToQueue(guildId, { title: 'Pierwszy program radia', url: filePath, image: '', length: '' }, QueueType.QUEUE);
                 } 
                 else if (scheduleTime == 'evening') 
                 {
@@ -45,13 +45,13 @@ async function play(scheduleTime, interacion) {
                     {
                         Log.info("Playing evening schedulers song", null, guildId, guild[1].name);
                         filePath = path.resolve(__dirname, 'schedulersSongs/barka.ogg')
-                        addToQueue(guildId, { title: 'Barka', url: 'https://youtu.be/A3gQzWmW6Sk?si=EznoGxg-FIezqIaV', image: '', length: '' });
+                        addToQueue(guildId, { title: 'Barka', url: 'https://youtu.be/A3gQzWmW6Sk?si=EznoGxg-FIezqIaV', image: '', length: '' }, QueueType.QUEUE);
                     }
                     else
                     {
                         Log.info("Playing evening schedulers song", null, guildId, guild[1].name);
                         filePath = path.resolve(__dirname, 'schedulersSongs/papiezowa.ogg')
-                        addToQueue(guildId, { title: 'Papiezowa', url: 'https://youtu.be/2yusdx60_aw?si=a-_aOm6lt_dJNfG7filePath', image: '', length: '' });
+                        addToQueue(guildId, { title: 'Papiezowa', url: 'https://youtu.be/2yusdx60_aw?si=a-_aOm6lt_dJNfG7filePath', image: '', length: '' }, QueueType.QUEUE);
                     }                   
                 }
 
@@ -84,9 +84,9 @@ async function play(scheduleTime, interacion) {
                         adapterCreator: guild[1].voiceAdapterCreator
                     });
         
-                    if(globals.player === undefined || globals.player == null)
+                    if(getServerData(guildId).player === undefined || getServerData(guildId).player == null)
                     {
-                        globals.player = createAudioPlayer();
+                        getServerData(guildId).player = createAudioPlayer();
                     }
 
                     let filePath;
@@ -94,7 +94,7 @@ async function play(scheduleTime, interacion) {
                     {
                         Log.info("Playing morning schedulers song", null, guildId, guild[1].name);
                         filePath = path.resolve(__dirname, 'schedulersSongs/pierwszyProgramRadia.ogg');
-                        globals.queue.push({ title: 'Pierwszy program radia', url: filePath, image: '', length: '' });
+                        addToQueue(guildId, { title: 'Pierwszy program radia', url: filePath, image: '', length: '' }, QueueType.QUEUE);
                     } 
                     else if (scheduleTime == 'evening') 
                     {
@@ -102,14 +102,14 @@ async function play(scheduleTime, interacion) {
                         if(random < 0.5)
                         {
                             Log.info("Playing evening schedulers song", null, guildId, guild[1].name);
-                            filePath = path.resolve(__dirname, 'schedulersSongs/barka.ogg')
-                            globals.queue.push({ title: 'Barka', url: filePath, image: '', length: '' });
+                            filePath = path.resolve(__dirname, 'schedulersSongs/barka.ogg');
+                            addToQueue(guildId, { title: 'Barka', url: filePath, image: '', length: '' }, QueueType.QUEUE);
                         }
                         else
                         {
                             Log.info("Playing evening schedulers song", null, guildId, guild[1].name);
                             filePath = path.resolve(__dirname, 'schedulersSongs/papiezowa.ogg')
-                            globals.queue.push({ title: 'Papiezowa', url: filePath, image: '', length: '' });
+                            addToQueue(guildId, { title: 'Papiezowa', url: filePath, image: '', length: '' }, QueueType.QUEUE);
                         }                   
                     }
 
@@ -145,7 +145,7 @@ async function play(scheduleTime, interacion) {
                     getServerData(guildId).player.on('idle', () => {
                         Log.info("Player is idle", null, guildId, guild[1].name);
 
-                        shiftQueue(guildId, 'queue');
+                        shiftQueue(guildId, QueueType.QUEUE);
                         if (getServerData(guildId).queue.length === 0) 
                         {
                             voiceChannel.disconnect();

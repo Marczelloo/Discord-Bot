@@ -13,7 +13,7 @@ async function downloadYtdlp(interaction,
    disabledButtons) {
    const { playNextSong } = require('./playNextSong');
    const { play } = require('./play');
-   const { shiftQueue, getServerData } = require('../global');
+   const { shiftQueue, getServerData, QueueType } = require('../global');
    const { errorEmbed } = require('./embeds');
    const exec = util.promisify(require('child_process').exec);
 
@@ -40,7 +40,7 @@ async function downloadYtdlp(interaction,
    {
       Log.error("Error downloading audio: ", error, interaction.guild.id, interaction.guild.name);
       await interaction.editReply({ embeds: [errorEmbed("Error downloading audio, please try again later")] });
-      shiftQueue(interaction.guild.id, "queue");
+      shiftQueue(interaction.guild.id, QueueType.QUEUE);
       playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);
    }
 }

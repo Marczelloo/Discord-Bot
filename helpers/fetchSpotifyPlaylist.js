@@ -1,4 +1,4 @@
-const { setGlobalVariable, addToQueue, getServerData } = require("../global");
+const { setGlobalVariable, addToQueue, getServerData, QueueType } = require("../global");
 const { errorEmbed, successEmbed } = require("./embeds");
 const Log = require("./fancyLogs/log");
 
@@ -36,7 +36,7 @@ module.exports = {
                 length: formatedTime,
             };
 
-            addToQueue(interaction.guildId, newSong, "queue");
+            addToQueue(interaction.guildId, newSong, QueueType.QUEUE);
          }));
 
          Log.success("Added spotify playlist to queue", null, interaction.guild.id, interaction.guild.name);

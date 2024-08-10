@@ -1,5 +1,5 @@
 const ytdl = require("@distube/ytdl-core");
-const { shiftQueue, getServerData } = require("../global");
+const { shiftQueue, getServerData, QueueType } = require("../global");
 const { errorEmbed } = require("./embeds");
 const { play } = require("./play");
 const fs = require('fs');
@@ -62,7 +62,7 @@ async function downloadYtdl(interaction,
    {
       Log.error("Error downloading audio: ", error, interaction.guild.id, interaction.guild.name);
       await interaction.editReply({ embeds: [ errorEmbed("Error downloading audio")] });
-      shiftQueue(interaction.guild.id, "queue");
+      shiftQueue(interaction.guild.id, QueueType.QUEUE);
       playNextSong(interaction, connection);
    }
 }
