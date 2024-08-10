@@ -1,4 +1,4 @@
-const { setGlobalVariable, unshiftQueue, getServerData, shiftQueue } = require("../global");
+const { setGlobalVariable, unshiftQueue, getServerData, shiftQueue, QueueType } = require("../global");
 const { deleteMessages } = require("./deleteMessages");
 const Log = require("./fancyLogs/log");
 const { handleIdleLoop } = require("./handleIdleLoop");
@@ -13,10 +13,10 @@ function isSkipped(interaction, connection) {
    {
       Log.info("Playing earlier song", null, interaction.guild.id, interaction.guild.name);
       setGlobalVariable(interaction.guild.id, "playEarlier", false);
-      unshiftQueue(interaction.guild.id, "playedSongs", getServerData(interaction.guild.id).playedSongs[0]);
+      unshiftQueue(interaction.guild.id, QueueType.PLAYED_SONGS, getServerData(interaction.guild.id).playedSongs[0]);
       clearTimeout(getServerData(interaction.guild.id).timeout);
       Log.info("Timeout for clearing variables and disconnecting stopped", null, interaction.guild.id, interaction.guild.name);
-      shiftQueue(interaction.guild.id, "playedSongs");
+      shiftQueue(interaction.guild.id, QueueType.PLAYED_SONGS);
    }
    else
    {

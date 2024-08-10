@@ -1,5 +1,4 @@
 const { Events } = require('discord.js');
-const { errorEmbed } = require('../helpers/embeds');
 const Log = require('../helpers/fancyLogs/log');
 
 module.exports = {

@@ -1,5 +1,5 @@
 const { default: YouTube } = require("youtube-sr");
-const { setGlobalVariable, addToQueue } = require("../global");
+const { setGlobalVariable, addToQueue, QueueType } = require("../global");
 const { songEmbed, errorEmbed } = require("./embeds");
 const Log = require("./fancyLogs/log");
 
@@ -38,7 +38,7 @@ module.exports = {
                length: songInfo.durationFormatted,
            };
    
-           addToQueue(interaction.guildId, newSong, "queue");
+           addToQueue(interaction.guildId, newSong, QueueType.QUEUE);
 
            Log.success("Youtube song added to queue", null, interaction.guild.id, interaction.guild.name);
    

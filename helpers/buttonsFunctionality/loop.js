@@ -3,9 +3,9 @@ const Log = require("../fancyLogs/log");
 
 module.exports = {
    loop: async function(interaction, 
-      confirmation, 
-      nowPlayingEmbed, 
-      nowPlayingEmbedFields) {
+      confirmation,  
+      nowPlayingEmbedFields,
+      nowPlayingEmbed) {
       Log.info("Loop button clicked", null, interaction.guild.id, interaction.guild.name);
       if(getServerData(interaction.guild.id).autoplay)
       {
@@ -26,7 +26,7 @@ module.exports = {
          setGlobalVariable(interaction.guild.id, "loop", LoopType.NO_LOOP);
       }
       Log.info("Loop set to: " + getServerData(interaction.guild.id).loop, null, interaction.guild.id, interaction.guild.name);
-
+      
       nowPlayingEmbedFields[2].value = getServerData(interaction.guild.id).loop === LoopType.NO_LOOP ? 'No loop' : getServerData(interaction.guild.id).loop === LoopType.LOOP_SONG ? 'Loop song' : 'Loop queue';
       nowPlayingEmbed.setFields(nowPlayingEmbedFields);
 

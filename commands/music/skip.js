@@ -1,7 +1,7 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const { AudioPlayerStatus } = require('@discordjs/voice');
 
-const { getServerData, setGlobalVariable, shiftQueue, getClient } = require('../../global.js');
+const { getServerData, setGlobalVariable, shiftQueue, getClient, QueueType } = require('../../global.js');
 const { errorEmbed } = require('../../helpers/embeds.js');
 const Log = require('../../helpers/fancyLogs/log.js');
 
@@ -84,7 +84,7 @@ module.exports = {
                         url: getServerData(interaction.guild.id).queue[0].url
                     }
                     skippedSongs.push(skipedSong);
-                    shiftQueue(interaction.guild.id, "queue");
+                    shiftQueue(interaction.guild.id, QueueType.QUEUE);
                 }
                 getServerData(interaction.guild.id).player.stop();
     
