@@ -13,17 +13,23 @@ async function handlePlayerIdle(interaction,
 
    try
    {
+      const player = getServerData(interaction.guild.id).player;
 
-      if (!getServerData(interaction.guild.id).player) {
+      if (!player) {
          Log.error("Player not found in server data", null, interaction.guild.id, interaction.guild.name);
          return;
       }
 
-      getServerData(interaction.guild.id).player.on('stateChange', (oldState, newState) => {
+      if (player.listenerCount('stateChange') > 0 || player.listenerCount('idle') > 0) {
+         Log.info("Player already has event listeners attached", null, interaction.guild.id, interaction.guild.name);
+         return;
+      }
+
+      player.on('stateChange', (oldState, newState) => {
          Log.info(`Player state changed from ${oldState.status} to ${newState.status}`, null, interaction.guild.id, interaction.guild.name);
       });
 
-      getServerData(interaction.guild.id).player.on('idle', async () => {
+      player.on('idle', async () => {
          Log.info("Player is idle", null, interaction.guild.id, interaction.guild.name);
          if(getServerData(interaction.guild.id).schedulerPlaying)
          {
@@ -45,7 +51,7 @@ async function handlePlayerIdle(interaction,
             isSkipped(interaction, connection);
          }
 
-         if(getServerData(interaction.guild.id).player.state.status === AudioPlayerStatus.Playing)
+         if(player.state.status === AudioPlayerStatus.Playing)
          {
             Log.info("Player is playing", null, interaction.guild.id, interaction.guild.name);
             return;
@@ -64,9 +70,7 @@ async function handlePlayerIdle(interaction,
    catch(error)
    {
       Log.error("Error handling player idle: ", error, interaction.guild.id, interaction.guild.name);
-      return;
    }
 }
-
 
 exports.handlePlayerIdle = handlePlayerIdle;

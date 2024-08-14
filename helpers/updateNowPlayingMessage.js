@@ -12,12 +12,12 @@ module.exports = {
       Log.info("Updating now playing message", null, interaction.guild.id, interaction.guild.name);
       await interaction.channel.messages.fetch(getServerData(interaction.guild.id).nowPlayingMessage)
       .then(async message => {
-         if (message) message.delete().catch(error => {
+         if (message) await message.delete().catch(error => {
             if(error.code === 10008)
             {
                Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
                getServerData(interaction.guild.id).nowPlayingMessage = null;
-               sendNowPlayingMessage(interaction, nowPlayingEmbed, playingRow, pausedRow);
+               //sendNowPlayingMessage(interaction, nowPlayingEmbed, playingRow, pausedRow);
             }
             else
             {
@@ -36,7 +36,7 @@ module.exports = {
                   position: 'end'
                })
                .then(nowPlayingMessage => {
-                  Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
+                  Log.success("Now playing message updated 1", null, interaction.guild.id, interaction.guild.name);
                   setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
                   setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
                })
@@ -53,7 +53,7 @@ module.exports = {
                   position: 'end'
                })
                .then(nowPlayingMessage => {
-                  Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
+                  Log.success("Now playing message updated 2", nowPlayingMessage.id, interaction.guild.id, interaction.guild.name);
                   setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
                   setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
                })
@@ -79,7 +79,7 @@ module.exports = {
          {
             Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
             getServerData(interaction.guild.id).nowPlayingMessage = null;
-            sendNowPlayingMessage(interaction, nowPlayingEmbed, playingRow, pausedRow);
+            //sendNowPlayingMessage(interaction, nowPlayingEmbed, playingRow, pausedRow);
          }
       })
       .catch(error => {
