@@ -7,6 +7,7 @@ const { createButton } = require("./createButton");
 const { ButtonStyle } = require("discord.js");
 const { ActionRowBuilder } = require("@discordjs/builders");
 const Log = require("./fancyLogs/log");
+const { applyEqualizer } = require("./applyEqualizer");
 
 async function play(interaction, 
    outputFilePath, 
@@ -22,7 +23,7 @@ async function play(interaction,
    const eq = getServerData(interaction.guild.id).eqEffect;
 
    if(eq)
-      outputFilePath = applyEqualizer(interaction, eq)
+      outputFilePath = await applyEqualizer(interaction, eq);
 
    const resource = createAudioResource(outputFilePath, { inputType: StreamType.OggOpus, inlineVolume: true });
    resource.volume.setVolume(0.05);

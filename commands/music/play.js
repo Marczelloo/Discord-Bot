@@ -110,6 +110,11 @@ module.exports = {
                         Log.info("Player is playing", null, interaction.guild.id, interaction.guild.name);
                         return;    
                     }
+                    else if(getServerData(interaction.guild.id).player.state.status === AudioPlayerStatus.Paused)
+                    {
+                        Log.info("Player is paused", null, interaction.guild.id, interaction.guild.name);
+                        return;
+                    }
                     else 
                     {
                         try 
