@@ -67,7 +67,7 @@ async function playNextSong(interaction,
          })
       }
 
-      setSongInQueue(interaction.guild.id, 0, song, "queue");
+      //setSongInQueue(interaction.guild.id, 0, song, QueueType.QUEUE);
    }
    const song = getServerData(interaction.guild.id).queue[0];
 

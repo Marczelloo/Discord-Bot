@@ -21,6 +21,15 @@ async function downloadYtdl(interaction,
       Log.info("Proceding to download song", null, interaction.guild.id, interaction.guild.name);
       let stream;
 
+      if(getServerData(interaction.guild.id).queue[0].url.includes('playlist'))
+      {
+         Log.warning("Playlist detected", null, interaction.guild.id, interaction.guild.name);
+         Log.info("Shifting queue", null, interaction.guild.id, interaction.guild.name);
+         shiftQueue(interaction.guild.id, QueueType.QUEUE);
+         playNextSong(interaction, connection);
+         return;
+      }
+
       function setStream() {
          if(getServerData(interaction.guild.id).queue[0].url.includes('spotify'))
             stream = ytdl(getServerData(interaction.guild.id).queue[0].yt_url, { 
