@@ -4,6 +4,7 @@ const { errorEmbed } = require("./embeds");
 const { play } = require("./play");
 const fs = require('fs');
 const Log = require("./fancyLogs/log");
+const vcLeaveReset = require("./vcLeaveReset");
 
 async function downloadYtdl(interaction, 
    outputFilePath, 
@@ -20,19 +21,49 @@ async function downloadYtdl(interaction,
       Log.info("Proceding to download song", null, interaction.guild.id, interaction.guild.name);
       let stream;
 
-      if(getServerData(interaction.guild.id).queue[0].url.includes('spotify'))
-         stream = ytdl(getServerData(interaction.guild.id).queue[0].yt_url, { 
-            filter: 'audioonly', 
-            quality: 'highestaudio' 
-         });
-      else
-         stream = ytdl(getServerData(interaction.guild.id).queue[0].url, { 
-            filter: 'audioonly', 
-            quality: 'highestaudio' 
-         });
+      if(getServerData(interaction.guild.id).queue[0].url.includes('playlist'))
+      {
+         Log.warning("Playlist detected", null, interaction.guild.id, interaction.guild.name);
+         Log.info("Shifting queue", null, interaction.guild.id, interaction.guild.name);
+         shiftQueue(interaction.guild.id, QueueType.QUEUE);
+         playNextSong(interaction, connection);
+         return;
+      }
+
+      function setStream() {
+         if(getServerData(interaction.guild.id).queue[0].url.includes('spotify'))
+            stream = ytdl(getServerData(interaction.guild.id).queue[0].yt_url, { 
+               filter: 'audioonly', 
+               quality: 'highestaudio' 
+            });
+         else
+            stream = ytdl(getServerData(interaction.guild.id).queue[0].url, { 
+               filter: 'audioonly', 
+               quality: 'highestaudio' 
+            });
+      }
+
+      setStream();
 
       stream.on('error', error => {
          Log.error("Stream error: ", error, interaction.guild.id, interaction.guild.name);
+         Log.warning("Trying to download again", null, interaction.guild.id, interaction.guild.name);
+         let attempts = 0;
+         const maxAttempts = 3;
+         const interval = setInterval(() => {
+            if(attempts < maxAttempts)
+            {
+               setStream();
+               attempts++;
+            }
+            else
+            {
+               clearInterval(interval);
+               Log.error("Max attempts reached", null, interaction.guild.id, interaction.guild.name);
+               Log.info("Turning off player", null, interaction.guild.id, interaction.guild.name); 
+               vcLeaveReset(interaction.guild.id);
+            }
+         }, 1000);  
       });
 
       const writer = stream.pipe(fs.createWriteStream(outputFilePath));

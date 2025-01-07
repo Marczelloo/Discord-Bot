@@ -9,7 +9,7 @@ module.exports = {
       switch(loopType)
       {
          case LoopType.LOOP_QUEUE:
-            addToQueue(interaction.guild.id, getServerData(interaction.guild.id).playedSongs[0], QueueType.QUEUE);
+            addToQueue(interaction.guild.id, getServerData(interaction.guild.id).queue[0], QueueType.QUEUE);
             unshiftQueue(interaction.guild.id, QueueType.PLAYED_SONGS, getServerData(interaction.guild.id).queue[0]);
             shiftQueue(interaction.guild.id, QueueType.QUEUE);
             break;

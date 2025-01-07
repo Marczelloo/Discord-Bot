@@ -1,6 +1,7 @@
 const { default: YouTube } = require("youtube-sr");
 const { setGlobalVariable, addToQueue, QueueType } = require("../global");
 const Log = require("./fancyLogs/log");
+const { successEmbed, errorEmbed } = require("./embeds");
 
 module.exports = {
    fetchYoutubePlaylist: async function(url, interaction) {
