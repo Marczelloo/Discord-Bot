@@ -19,7 +19,7 @@ async function downloadYtdlp(interaction,
 
    try 
    {
-      const ytdlpPath = path.resolve(__dirname, "yt-dlp.exe");
+      const ytdlpPath = path.resolve(__dirname, "yt-dlp-lin");
       const downloadPath = outputFilePath.replace(/\s/g, '_');
       const outputPath = path.resolve(__dirname, "../temp", path.basename(downloadPath.replace(/\.ogg$/, '')));
       const command = `"${ytdlpPath}" -x --audio-format vorbis -o "${outputPath}" ${url}`;

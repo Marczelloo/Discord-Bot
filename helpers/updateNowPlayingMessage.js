@@ -58,89 +58,21 @@ module.exports = {
                   setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
                })
                .catch(error => {
-                  Log.error("Error deleting now playing message: ", error, interaction.guild.id, interaction.guild.name);
-               })
-            })
-            .catch(error => {
-               Log.error("Error sending now playing message: ", error, interaction.guild.id, interaction.guild.name);
-            }))
-
-            // message.edit({
-            //    embeds: [ nowPlayingEmbed ],
-            //    components: getServerData(interaction.guild.id).player.AudioPlayerStatus === AudioPlayerStatus.Paused ? [ pausedRow ] : [ playingRow ],
-            //    position: 'end'
-            // })
-            // .then(message => {
-            //    Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
-            //    setGlobalVariable(interaction.guild.id, "nowPlayingMessage", message.id);
-            //    setGlobalVariable(interaction.guild.id, "playerMessage", message)
-            // })
-            // .catch(error => {
-            //    Log.error("Error updating now playing message: ", error, interaction.guild.id, interaction.guild.name);
-            // })
+                  Log.error("Error updating playing message: ", error, interaction.guild.id, interaction.guild.name);
+               }))
+            }
          }
-
-
-         // if (message) message.delete().catch(error => {
-         //    if(error.code === 10008)
-         //    {
-         //       Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
-         //       getServerData(interaction.guild.id).nowPlayingMessage = null;
-         //    }
-         //    else
-         //    {
-         //       Log.error("Error deleting now playing message: ", error, interaction.guild.id, interaction.guild.name);
-         //    }
-         // });
-
-         // try
-         // {
-         //    if(getServerData(interaction.guild.id).player.AudioPlayerStatus === AudioPlayerStatus.Paused)
-         //    {
-         //       setGlobalVariable(interaction.guild.id, "coll", 
-         //       await interaction.channel.send({
-         //          embeds: [ nowPlayingEmbed ],
-         //          components: [ pausedRow ],
-         //          position: 'end'
-         //       })
-         //       .then(nowPlayingMessage => {
-         //          Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
-         //          setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
-         //          setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
-         //       })
-         //       .catch(error => {
-         //          Log.error("Error updating paused message: ", error, interaction.guild.id, interaction.guild.name);
-         //       }))
-         //    }
-         //    else
-         //    {
-         //       setGlobalVariable(interaction.guild.id, "coll", 
-         //       await interaction.channel.send({
-         //          embeds: [ nowPlayingEmbed ],
-         //          components: [ playingRow ],
-         //          position: 'end'
-         //       })
-         //       .then(nowPlayingMessage => {
-         //          Log.success("Now playing message updated", null, interaction.guild.id, interaction.guild.name);
-         //          setGlobalVariable(interaction.guild.id, "nowPlayingMessage", nowPlayingMessage.id);
-         //          setGlobalVariable(interaction.guild.id, "playerMessage", nowPlayingMessage)
-         //       })
-         //       .catch(error => {
-         //          Log.error("Error updating playing message: ", error, interaction.guild.id, interaction.guild.name);
-         //       }))
-         //    }
-         // }
-         // catch(error)
-         // {
-         //    if(error.code === 10008)
-         //    {
-         //       Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
-         //    }
-         //    else
-         //    {
-         //       Log.error("Error updating now playing message: ", error, interaction.guild.id, interaction.guild.name);
-         //    }
-         // }
+         catch(error)
+         {
+            if(error.code === 10008)
+            {
+               Log.error("The message has already been deleted or does not exist.", error, interaction.guild.id, interaction.guild.name);
+            }
+            else
+            {
+               Log.error("Error updating now playing message: ", error, interaction.guild.id, interaction.guild.name);
+            }
+         }
       })
       .catch(error => {
          if(error.code === 10008)
