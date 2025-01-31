@@ -77,7 +77,7 @@ async function play(scheduleTime, interacion) {
                 const randomChannel = voiceChannels.random(); 
 
                 if (randomChannel) {
-                    Log.ingo("Connecting to voice channel", null, guildId, guild[1].name);
+                    Log.info("Connecting to voice channel", null, guildId, guild[1].name);
                     const voiceChannel = joinVoiceChannel({
                         channelId: randomChannel.id,
                         guildId: guildId,

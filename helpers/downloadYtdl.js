@@ -5,6 +5,16 @@ const { play } = require("./play");
 const fs = require('fs');
 const Log = require("./fancyLogs/log");
 const vcLeaveReset = require("./vcLeaveReset");
+const path = require("path");
+
+const cookiesFilePath = path.resolve(__dirname, "cookiesYtdl.json");
+if (!fs.existsSync(cookiesFilePath)) {
+  throw new Error(`Cookies file not found: ${cookiesFilePath}`);
+}
+
+const cookies = JSON.parse(fs.readFileSync(cookiesFilePath));
+
+const agent = ytdl.createAgent(cookies);
 
 async function downloadYtdl(interaction, 
    outputFilePath, 
@@ -30,20 +40,23 @@ async function downloadYtdl(interaction,
          return;
       }
 
-      function setStream() {
+      async function setStream() 
+      {
          if(getServerData(interaction.guild.id).queue[0].url.includes('spotify'))
             stream = ytdl(getServerData(interaction.guild.id).queue[0].yt_url, { 
                filter: 'audioonly', 
-               quality: 'highestaudio' 
+               quality: 'highestaudio',
+               agent: agent
             });
          else
             stream = ytdl(getServerData(interaction.guild.id).queue[0].url, { 
                filter: 'audioonly', 
-               quality: 'highestaudio' 
+               quality: 'highestaudio',
+               agent: agent
             });
       }
 
-      setStream();
+      await setStream();
 
       stream.on('error', error => {
          Log.error("Stream error: ", error, interaction.guild.id, interaction.guild.name);

@@ -13,6 +13,7 @@ module.exports = {
     {
         try
         {
+            const guild = interaction.guild;
             const botMember = await guild.members.fetch(getClient().user.id);
             const botVoiceChannel = botMember.voice.channel;
             

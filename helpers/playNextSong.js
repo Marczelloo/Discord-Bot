@@ -3,7 +3,6 @@ const { setSongInQueue, getServerData, setGlobalVariable, shiftQueue, QueueType 
 const { formatTime } = require("./formatTime");
 const { playerEmbed } = require("./embeds");
 const { nowPlayingEmbedFields } = require("./nowPlayingEmbedFields");
-const { downloadYtdlp } = require("./downloadYtdlp");
 const { downloadYtdl } = require("./downloadYtdl");
 const Log = require('./fancyLogs/log');
 const { default: YouTube } = require('youtube-sr');
@@ -68,9 +67,8 @@ async function playNextSong(interaction,
             playNextSong(interaction, connection, pausedRow, playingRow, disabledButtons);
          })
       }
-
-      //setSongInQueue(interaction.guild.id, 0, song, QueueType.QUEUE);
    }
+   
    const song = getServerData(interaction.guild.id).queue[0];
 
    const embedFields = nowPlayingEmbedFields(interaction.guild.id, song, formattedTime);
@@ -83,11 +81,8 @@ async function playNextSong(interaction,
       fs.mkdirSync(tempFolderPath);
    }
    outputFilePath = tempFolderPath + "output_" + interaction.guild.id + ".ogg";
-
-   if(getServerData(interaction.guild.id).ageRestricted)
-      downloadYtdlp(interaction, song.url, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
-   else
-      downloadYtdl(interaction, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
+   
+   downloadYtdl(interaction, outputFilePath, connection, nowPlayingEmbed, embedFields, pausedRow, playingRow, disabledButtons);
 } 
 
 exports.playNextSong = playNextSong;
